@@ -1,8 +1,6 @@
 import { useAppStore } from "../stores/app-store";
 import { Plus, Clock, Settings } from "lucide-react";
-
-// In dev, Vite serves from src/ root. In prod, relative to index.html.
-const logoSrc = "/icon.png";
+import logoImg from "../icon.png";
 
 export function Sidebar() {
   const { setHistoryOpen, setSettingsOpen, setInputText, setOutputText, setError, config } = useAppStore();
@@ -29,12 +27,12 @@ export function Sidebar() {
         backgroundColor: "var(--color-bg)",
       }}
     >
-      {/* Logo — positioned below macOS traffic lights */}
+      {/* Logo — below macOS traffic lights */}
       <div
         style={{
-          width: 32,
-          height: 32,
-          borderRadius: 10,
+          width: 30,
+          height: 30,
+          borderRadius: 8,
           overflow: "hidden",
           marginBottom: 16,
           marginTop: 56,
@@ -42,9 +40,9 @@ export function Sidebar() {
         }}
       >
         <img
-          src={logoSrc}
+          src={logoImg}
           alt="Morph"
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          style={{ width: 30, height: 30, display: "block", objectFit: "cover" }}
           draggable={false}
         />
       </div>
