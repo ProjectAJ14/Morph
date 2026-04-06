@@ -19,6 +19,7 @@
       --violet-light: #a78bfa;
       --blue: #3b82f6;
       --emerald: #10b981;
+      --amber: #f59e0b;
       --glass-bg: rgba(255, 255, 255, 0.03);
       --glass-border: rgba(255, 255, 255, 0.06);
       --text-primary: rgba(255, 255, 255, 0.92);
@@ -143,6 +144,11 @@
       margin: 0 auto 40px;
       font-size: 36px;
       box-shadow: 0 0 60px rgba(124, 92, 252, 0.3);
+      animation: iconFloat 4s ease-in-out infinite alternate;
+    }
+    @keyframes iconFloat {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-8px); }
     }
     .hero h1 {
       font-size: clamp(36px, 5.5vw, 64px);
@@ -212,6 +218,26 @@
       border-color: rgba(255, 255, 255, 0.12);
       transform: translateY(-1px);
     }
+    .btn-sm { padding: 8px 16px; font-size: 13px; border-radius: 8px; }
+    .btn .badge {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      font-weight: 600;
+    }
+    .btn-highlighted {
+      box-shadow: 0 0 20px rgba(124, 92, 252, 0.25);
+    }
+
+    /* Section divider */
+    .section-divider {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--violet), var(--blue));
+      margin: 0 auto 48px;
+      border-radius: 1px;
+    }
 
     /* How it works */
     .how-it-works {
@@ -221,7 +247,7 @@
       text-align: center;
       font-size: 28px;
       font-weight: 700;
-      margin-bottom: 56px;
+      margin-bottom: 16px;
     }
     .steps {
       display: flex;
@@ -251,42 +277,17 @@
       background: rgba(16, 185, 129, 0.15); color: var(--emerald);
       border: 1px solid rgba(16, 185, 129, 0.3);
     }
-    .step h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-    .step p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; max-width: 240px; margin: 0 auto; }
-
-    /* Features */
-    .features { padding: 80px 0; }
-    .features h2 { text-align: center; font-size: 28px; font-weight: 700; margin-bottom: 48px; }
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
-    }
-    .feature-card {
+    .step-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
-      backdrop-filter: blur(20px);
-      border-radius: 16px;
-      padding: 28px;
-      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
     }
-    .feature-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
-      border-color: rgba(255, 255, 255, 0.1);
-    }
-    .feature-icon {
-      width: 44px; height: 44px;
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
-      margin-bottom: 16px;
-    }
-    .feature-icon.violet { background: rgba(124, 92, 252, 0.15); }
-    .feature-icon.blue { background: rgba(59, 130, 246, 0.15); }
-    .feature-icon.emerald { background: rgba(16, 185, 129, 0.15); }
-    .feature-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
-    .feature-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+    .step-icon svg { color: var(--text-secondary); }
+    .step h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .step p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; max-width: 240px; margin: 0 auto; }
 
     /* Shortcut demo */
     .shortcut-demo {
@@ -314,176 +315,567 @@
     .kbd-plus { color: var(--text-tertiary); font-size: 14px; }
     .shortcut-demo p { font-size: 16px; color: var(--text-secondary); max-width: 480px; margin: 0 auto; }
 
-    /* Download CTA */
+    /* Features */
+    .features { padding: 80px 0; }
+    .features h2 { text-align: center; font-size: 28px; font-weight: 700; margin-bottom: 16px; }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(20px);
+      border-radius: 16px;
+      padding: 28px;
+      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      padding: 1px;
+      background: linear-gradient(135deg, transparent 40%, rgba(124, 92, 252, 0.2), rgba(59, 130, 246, 0.2));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+    .feature-icon.violet { background: rgba(124, 92, 252, 0.15); }
+    .feature-icon.blue { background: rgba(59, 130, 246, 0.15); }
+    .feature-icon.emerald { background: rgba(16, 185, 129, 0.15); }
+    .feature-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+    .feature-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+    /* Download section */
     .download {
-      padding: 80px 0 120px;
+      padding: 80px 0 40px;
       text-align: center;
     }
-    .download h2 { font-size: 32px; font-weight: 700; margin-bottom: 16px; }
-    .download p { font-size: 16px; color: var(--text-secondary); margin-bottom: 32px; }
+    .download h2 { font-size: 28px; font-weight: 700; margin-bottom: 12px; }
+    .download .subtitle { color: var(--text-secondary); font-size: 15px; margin-bottom: 36px; }
     .download-buttons {
-      display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
     }
-    .download-buttons .btn .badge {
-      font-size: 11px; padding: 2px 6px; border-radius: 4px;
-      background: rgba(255,255,255,0.1); font-weight: 600;
+    .download-note {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 16px 20px;
+      background: rgba(245, 158, 11, 0.06);
+      border: 1px solid rgba(245, 158, 11, 0.15);
+      border-radius: 12px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
     }
+    .download-note strong { color: var(--amber); }
+    .version-tag {
+      display: inline-block;
+      font-size: 13px;
+      color: var(--text-tertiary);
+      margin-bottom: 20px;
+    }
+    .version-tag .mono { color: var(--text-secondary); }
+    .all-releases-link { margin-top: 4px; margin-bottom: 28px; }
+
+    /* Loading state */
+    .download-loading {
+      color: var(--text-tertiary);
+      font-size: 14px;
+      padding: 12px 0;
+    }
+    .download-loading::after {
+      content: '';
+      animation: dots 1.5s steps(3) infinite;
+    }
+    @keyframes dots {
+      0% { content: ''; }
+      33% { content: '.'; }
+      66% { content: '..'; }
+      100% { content: '...'; }
+    }
+
+    /* Install instructions modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .modal-overlay.visible { opacity: 1; pointer-events: auto; }
+    .modal {
+      background: var(--bg-surface);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 32px;
+      max-width: 480px;
+      width: calc(100% - 48px);
+      position: relative;
+      transform: scale(0.95) translateY(10px);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+    }
+    .modal-overlay.visible .modal { transform: scale(1) translateY(0); }
+    .modal-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass-bg);
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, color 0.2s;
+    }
+    .modal-close:hover { background: rgba(255, 255, 255, 0.08); color: var(--text-primary); }
+    .modal-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .modal-subtitle { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; }
+    .install-steps { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+    .install-step { display: flex; gap: 14px; align-items: flex-start; }
+    .install-step-num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .install-step-num.blue { background: rgba(59, 130, 246, 0.15); color: var(--blue); }
+    .install-step-num.violet { background: rgba(139, 92, 246, 0.15); color: var(--violet); }
+    .install-step-num.emerald { background: rgba(16, 185, 129, 0.15); color: var(--emerald); }
+    .install-step-text { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+    .install-step-text strong { color: var(--text-primary); font-weight: 600; }
+    .install-cmd {
+      display: flex; align-items: center; gap: 8px; margin-top: 8px;
+      background: var(--bg-base);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--emerald);
+      word-break: break-all;
+    }
+    .install-cmd code { flex: 1; user-select: all; }
+    .install-cmd-copy {
+      flex-shrink: 0;
+      background: none;
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-family: 'Inter', sans-serif;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .install-cmd-copy:hover { color: var(--text-primary); border-color: rgba(255, 255, 255, 0.15); }
+    .modal-footer { display: flex; justify-content: flex-end; }
 
     /* Footer */
     footer {
+      padding: 40px 0;
       border-top: 1px solid var(--glass-border);
-      padding: 32px 24px;
       text-align: center;
-      font-size: 13px;
-      color: var(--text-tertiary);
     }
+    footer p { font-size: 13px; color: var(--text-tertiary); }
     footer a { color: var(--text-secondary); text-decoration: none; }
     footer a:hover { color: var(--text-primary); }
 
+    /* Responsive */
     @media (max-width: 768px) {
-      .steps { flex-direction: column; gap: 40px; }
+      .steps { flex-direction: column; gap: 32px; }
       .hero { padding: 120px 0 40px; }
+    }
+    @media (max-width: 640px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .download-buttons { flex-direction: column; align-items: center; }
+      .btn { width: 100%; max-width: 280px; justify-content: center; }
     }
   </style>
 </head>
 <body>
-  <!-- Ambient glows -->
   <div class="glow glow-violet"></div>
   <div class="glow glow-blue"></div>
   <div class="glow glow-emerald"></div>
 
-  <!-- Nav -->
   <nav>
     <div class="inner">
       <a class="brand" href="#">
         <div class="logo">M</div>
         <span>Morph</span>
       </a>
-      <a class="gh-link" href="https://github.com/ProjectAJ14/Morph" target="_blank">GitHub</a>
+      <a class="gh-link" href="https://github.com/ProjectAJ14/Morph" target="_blank" rel="noopener">GitHub &nearr;</a>
     </div>
   </nav>
 
-  <div class="container">
+  <main>
     <!-- Hero -->
     <section class="hero">
-      <div class="hero-icon reveal">M</div>
-      <h1 class="reveal reveal-delay-1">Rewrite <span class="gradient">Anything</span>,<br/>Instantly</h1>
-      <p class="tagline reveal reveal-delay-2">
-        AI-powered text rewriter that lives in your menu bar.
-        One shortcut to transform any text on your clipboard.
-        Powered by Groq for lightning-fast results.
-      </p>
-      <div class="hero-cta reveal reveal-delay-3">
-        <a class="btn btn-primary" href="https://github.com/ProjectAJ14/Morph/releases/latest">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Download for macOS
-        </a>
-        <a class="btn btn-glass" href="https://github.com/ProjectAJ14/Morph" target="_blank">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-          View on GitHub
-        </a>
+      <div class="container">
+        <div class="hero-icon reveal">M</div>
+        <h1 class="reveal reveal-delay-1">Rewrite <span class="gradient">Anything</span>,<br/>Instantly</h1>
+        <p class="tagline reveal reveal-delay-2">
+          AI-powered text rewriter that lives in your menu bar.
+          One shortcut to transform any text on your clipboard.
+          Powered by Groq for lightning-fast results.
+        </p>
+        <div class="hero-cta reveal reveal-delay-3">
+          <a href="#download" class="btn btn-primary">Download the App</a>
+          <a href="https://github.com/ProjectAJ14/Morph" class="btn btn-glass" target="_blank" rel="noopener">View Source</a>
+        </div>
       </div>
     </section>
 
     <!-- How it works -->
     <section class="how-it-works">
-      <h2 class="reveal">How It Works</h2>
-      <div class="steps">
-        <div class="step reveal reveal-delay-1">
-          <div class="step-number">1</div>
-          <h3>Trigger</h3>
-          <p>Press the global shortcut from anywhere. Morph reads your clipboard automatically.</p>
-        </div>
-        <div class="step reveal reveal-delay-2">
-          <div class="step-number">2</div>
-          <h3>Rewrite</h3>
-          <p>AI rewrites your text using your custom system prompt. Results stream in instantly.</p>
-        </div>
-        <div class="step reveal reveal-delay-3">
-          <div class="step-number">3</div>
-          <h3>Copy</h3>
-          <p>One click to copy the rewritten text back to your clipboard. Done.</p>
+      <div class="container">
+        <h2 class="reveal">How It Works</h2>
+        <div class="section-divider reveal"></div>
+        <div class="steps">
+          <div class="step reveal">
+            <div class="step-number">1</div>
+            <div class="step-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+            </div>
+            <h3>Trigger</h3>
+            <p>Press the global shortcut from anywhere. Morph reads your clipboard automatically.</p>
+          </div>
+          <div class="step reveal reveal-delay-1">
+            <div class="step-number">2</div>
+            <div class="step-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3z"/></svg>
+            </div>
+            <h3>Rewrite</h3>
+            <p>AI rewrites your text using your custom system prompt. Results stream in instantly via Groq.</p>
+          </div>
+          <div class="step reveal reveal-delay-2">
+            <div class="step-number">3</div>
+            <div class="step-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            </div>
+            <h3>Copy</h3>
+            <p>One click to copy the rewritten text back to your clipboard. Done.</p>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- Shortcut demo -->
     <section class="shortcut-demo reveal">
-      <div class="kbd-combo">
-        <span class="kbd">&#8984;</span>
-        <span class="kbd-plus">+</span>
-        <span class="kbd">&#8679;</span>
-        <span class="kbd-plus">+</span>
-        <span class="kbd">M</span>
+      <div class="container">
+        <div class="kbd-combo">
+          <span class="kbd">&#8984;</span>
+          <span class="kbd-plus">+</span>
+          <span class="kbd">&#8679;</span>
+          <span class="kbd-plus">+</span>
+          <span class="kbd">M</span>
+        </div>
+        <p>Works from any app. Morph appears, rewrites, and disappears. Zero friction.</p>
       </div>
-      <p>Works from any app. Morph appears, rewrites, and disappears. Zero friction.</p>
     </section>
 
     <!-- Features -->
     <section class="features">
-      <h2 class="reveal">Built for Speed</h2>
-      <div class="features-grid">
-        <div class="feature-card reveal reveal-delay-1">
-          <div class="feature-icon violet">&#9889;</div>
-          <h3>Groq-Powered</h3>
-          <p>Uses Groq's inference engine for near-instant rewrites. No waiting around.</p>
-        </div>
-        <div class="feature-card reveal reveal-delay-2">
-          <div class="feature-icon blue">&#127760;</div>
-          <h3>Global Shortcut</h3>
-          <p>Trigger from any app without switching windows. Reads clipboard automatically.</p>
-        </div>
-        <div class="feature-card reveal reveal-delay-3">
-          <div class="feature-icon emerald">&#128274;</div>
-          <h3>Fully Local</h3>
-          <p>No accounts, no cloud storage. Your API key and history stay on your machine in SQLite.</p>
-        </div>
-        <div class="feature-card reveal reveal-delay-1">
-          <div class="feature-icon violet">&#128221;</div>
-          <h3>Custom Prompts</h3>
-          <p>Set your own system prompt to match your voice, tone, or use case. Make it yours.</p>
-        </div>
-        <div class="feature-card reveal reveal-delay-2">
-          <div class="feature-icon blue">&#128197;</div>
-          <h3>History</h3>
-          <p>Every rewrite is saved locally. Browse and reuse past transformations anytime.</p>
-        </div>
-        <div class="feature-card reveal reveal-delay-3">
-          <div class="feature-icon emerald">&#128230;</div>
-          <h3>Lightweight</h3>
-          <p>Minimal Electron app. No heavy frameworks, no embedded servers. Just Vite + React.</p>
+      <div class="container">
+        <h2 class="reveal">Built for Speed</h2>
+        <div class="section-divider reveal"></div>
+        <div class="features-grid">
+          <div class="feature-card reveal">
+            <div class="feature-icon violet">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+            <h3>Groq-Powered</h3>
+            <p>Uses Groq's inference engine for near-instant rewrites. Streaming responses so you see results as they're generated.</p>
+          </div>
+          <div class="feature-card reveal reveal-delay-1">
+            <div class="feature-icon blue">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+            </div>
+            <h3>Global Shortcut</h3>
+            <p>Trigger from any app without switching windows. Morph reads your clipboard automatically &mdash; no paste needed.</p>
+          </div>
+          <div class="feature-card reveal reveal-delay-2">
+            <div class="feature-icon emerald">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <h3>Fully Local</h3>
+            <p>No accounts, no cloud storage. Your API key and rewrite history stay on your machine in a local SQLite database.</p>
+          </div>
+          <div class="feature-card reveal">
+            <div class="feature-icon violet">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            </div>
+            <h3>Custom Prompts</h3>
+            <p>Set your own system prompt to match your voice, tone, or use case. Rewrite for emails, code reviews, or social posts.</p>
+          </div>
+          <div class="feature-card reveal reveal-delay-1">
+            <div class="feature-icon blue">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <h3>History</h3>
+            <p>Every rewrite is saved locally. Browse and reuse past transformations anytime from the history panel.</p>
+          </div>
+          <div class="feature-card reveal reveal-delay-2">
+            <div class="feature-icon emerald">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>
+            </div>
+            <h3>Lightweight</h3>
+            <p>Minimal Electron app. No heavy frameworks, no embedded servers. Just Vite + React, built for speed.</p>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- Download -->
-    <section class="download reveal">
-      <h2>Get Morph</h2>
-      <p>Download the latest release for your platform.</p>
-      <div class="download-buttons">
-        <a class="btn btn-primary" href="https://github.com/ProjectAJ14/Morph/releases/latest">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          macOS <span class="badge">Apple Silicon + Intel</span>
-        </a>
-        <a class="btn btn-glass" href="https://github.com/ProjectAJ14/Morph/releases/latest">
-          Windows <span class="badge">x64</span>
-        </a>
+    <section class="download" id="download">
+      <div class="container">
+        <h2 class="reveal">Get Morph</h2>
+        <p class="subtitle reveal">Download the latest release for your platform.</p>
+        <div id="download-area" class="reveal">
+          <p class="download-loading">Fetching the latest release</p>
+        </div>
       </div>
     </section>
-  </div>
+  </main>
 
-  <!-- Footer -->
   <footer>
-    <p>Morph &mdash; Built with Electron, React, and Groq. <a href="https://github.com/ProjectAJ14/Morph" target="_blank">Source on GitHub</a></p>
+    <div class="container">
+      <p>
+        Morph &middot;
+        Built with Electron, React, and Groq &middot;
+        <a href="https://github.com/ProjectAJ14/Morph" target="_blank" rel="noopener">Source on GitHub</a>
+      </p>
+    </div>
   </footer>
 
-  <!-- Scroll reveal script -->
+  <!-- Install instructions modal -->
+  <div class="modal-overlay" id="install-modal">
+    <div class="modal">
+      <button class="modal-close" id="modal-close" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+
+      <!-- macOS instructions -->
+      <div id="modal-mac" style="display:none;">
+        <p class="modal-title">Install on macOS</p>
+        <p class="modal-subtitle">The app is unsigned. Follow these steps after downloading:</p>
+        <div class="install-steps">
+          <div class="install-step">
+            <span class="install-step-num blue">1</span>
+            <div class="install-step-text"><strong>Open the .dmg file</strong> and drag Morph into Applications.</div>
+          </div>
+          <div class="install-step">
+            <span class="install-step-num violet">2</span>
+            <div class="install-step-text">
+              <strong>Remove the quarantine flag</strong> by running this in Terminal:
+              <div class="install-cmd">
+                <code>xattr -cr "/Applications/Morph.app"</code>
+                <button class="install-cmd-copy" onclick="navigator.clipboard.writeText('xattr -cr &quot;/Applications/Morph.app&quot;');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>
+              </div>
+            </div>
+          </div>
+          <div class="install-step">
+            <span class="install-step-num emerald">3</span>
+            <div class="install-step-text"><strong>Open the app</strong> normally. You're all set!</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary btn-sm" onclick="closeInstallModal()">Got it</button>
+        </div>
+      </div>
+
+      <!-- Windows instructions -->
+      <div id="modal-win" style="display:none;">
+        <p class="modal-title">Install on Windows</p>
+        <p class="modal-subtitle">Windows SmartScreen may block the unsigned installer:</p>
+        <div class="install-steps">
+          <div class="install-step">
+            <span class="install-step-num blue">1</span>
+            <div class="install-step-text"><strong>Run the downloaded .exe</strong> installer.</div>
+          </div>
+          <div class="install-step">
+            <span class="install-step-num violet">2</span>
+            <div class="install-step-text">If SmartScreen appears, click <strong>"More info"</strong>.</div>
+          </div>
+          <div class="install-step">
+            <span class="install-step-num emerald">3</span>
+            <div class="install-step-text">Click <strong>"Run anyway"</strong> to proceed.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary btn-sm" onclick="closeInstallModal()">Got it</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const observer = new IntersectionObserver(
-      (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('revealed'); }),
-      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
-    );
-    document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+    // Scroll reveal
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    // OS detection
+    function detectOS() {
+      try {
+        if (navigator.userAgentData && navigator.userAgentData.platform) {
+          const p = navigator.userAgentData.platform.toLowerCase();
+          if (p.includes('mac')) return 'mac';
+          if (p.includes('win')) return 'win';
+        }
+      } catch (e) { /* fall through */ }
+      const ua = (navigator.platform || navigator.userAgent || '').toLowerCase();
+      if (ua.includes('mac')) return 'mac';
+      if (ua.includes('win')) return 'win';
+      return 'other';
+    }
+
+    // Fetch latest release and render download buttons
+    const REPO = 'ProjectAJ14/Morph';
+    const RELEASES_URL = `https://api.github.com/repos/${REPO}/releases/latest`;
+    const FALLBACK_URL = `https://github.com/${REPO}/releases`;
+
+    async function loadDownloads() {
+      const area = document.getElementById('download-area');
+      const userOS = detectOS();
+
+      try {
+        const res = await fetch(RELEASES_URL);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const release = await res.json();
+
+        const assets = release.assets || [];
+        const version = release.tag_name || '';
+
+        // Find assets by extension and architecture
+        const macArm64Dmg = assets.find(a => a.name.match(/arm64.*\.dmg$/i));
+        const macX64Dmg = assets.find(a => a.name.match(/(?:x64|intel).*\.dmg$/i) || (a.name.endsWith('.dmg') && !a.name.includes('arm64') && a !== macArm64Dmg));
+        const winExe = assets.find(a => a.name.endsWith('.exe'));
+
+        let html = '';
+
+        if (version) {
+          html += `<p class="version-tag">Latest release: <span class="mono">${version}</span></p>`;
+        }
+
+        html += '<div class="download-buttons">';
+
+        // macOS Apple Silicon
+        if (macArm64Dmg) {
+          const highlight = userOS === 'mac' ? ' btn-highlighted' : '';
+          html += `<a href="${macArm64Dmg.browser_download_url}" class="btn btn-primary${highlight}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83"/><path d="M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11"/></svg>
+            macOS <span class="badge">Apple Silicon</span></a>`;
+        }
+
+        // macOS Intel
+        if (macX64Dmg) {
+          html += `<a href="${macX64Dmg.browser_download_url}" class="btn btn-glass">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83"/><path d="M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11"/></svg>
+            macOS <span class="badge">Intel</span></a>`;
+        }
+
+        // Windows
+        if (winExe) {
+          const highlight = userOS === 'win' ? ' btn-highlighted' : '';
+          html += `<a href="${winExe.browser_download_url}" class="btn ${userOS === 'win' ? 'btn-primary' : 'btn-glass'}${highlight}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.548l7.185-0.98v6.94H3V5.548zm0 12.904l7.185 0.98v-6.94H3v5.96zm8.154 1.084L22 21v-8.508H11.154v8.044zm0-14.072v8.044H22V3L11.154 5.464z"/></svg>
+            Windows</a>`;
+        }
+
+        html += '</div>';
+
+        // All releases link
+        html += `<p class="all-releases-link"><a href="${FALLBACK_URL}" class="btn btn-glass btn-sm" target="_blank" rel="noopener">View all releases on GitHub &nearr;</a></p>`;
+
+        area.innerHTML = html;
+      } catch (e) {
+        area.innerHTML = `
+          <p style="color: var(--text-secondary); margin-bottom: 20px;">
+            Could not load the latest release. Check GitHub for downloads.
+          </p>
+          <a href="${FALLBACK_URL}" class="btn btn-primary" target="_blank" rel="noopener">
+            Visit GitHub Releases &nearr;
+          </a>
+          <div style="height: 28px;"></div>
+        `;
+      }
+    }
+
+    loadDownloads();
+
+    // Install instructions modal
+    const installModal = document.getElementById('install-modal');
+    const modalMac = document.getElementById('modal-mac');
+    const modalWin = document.getElementById('modal-win');
+
+    function showInstallModal(platform) {
+      modalMac.style.display = platform === 'mac' ? 'block' : 'none';
+      modalWin.style.display = platform === 'win' ? 'block' : 'none';
+      installModal.classList.add('visible');
+    }
+
+    function closeInstallModal() {
+      installModal.classList.remove('visible');
+    }
+
+    // Close on overlay click
+    installModal.addEventListener('click', function(e) {
+      if (e.target === installModal) closeInstallModal();
+    });
+    document.getElementById('modal-close').addEventListener('click', closeInstallModal);
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeInstallModal();
+    });
+
+    // Intercept download button clicks to show install instructions
+    document.getElementById('download-area').addEventListener('click', function(e) {
+      const btn = e.target.closest('a.btn');
+      if (!btn || !btn.href || !btn.href.includes('/download/')) return;
+      const text = btn.textContent.toLowerCase();
+      if (text.includes('macos')) {
+        showInstallModal('mac');
+      } else if (text.includes('windows')) {
+        showInstallModal('win');
+      }
+      // Download still proceeds — the <a> navigates normally
+    });
   </script>
 </body>
 </html>
