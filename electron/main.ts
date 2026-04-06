@@ -90,6 +90,10 @@ async function createWindow(): Promise<void> {
     }
   }
 
+  const iconPath = isDev
+    ? path.join(__dirname, "..", "resources", "icon.png")
+    : path.join(process.resourcesPath, "icon.png");
+
   mainWindow = new BrowserWindow({
     width: config.window.width,
     height: config.window.height,
@@ -97,6 +101,7 @@ async function createWindow(): Promise<void> {
     y: config.window.y,
     minWidth: 500,
     minHeight: 400,
+    icon: iconPath,
     titleBarStyle: "hiddenInset",
     trafficLightPosition: { x: 16, y: 16 },
     backgroundColor: "#09090b",
