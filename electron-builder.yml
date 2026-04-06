@@ -1,0 +1,57 @@
+appId: com.morph.app
+productName: Morph
+copyright: Copyright © 2026
+
+directories:
+  output: dist
+  buildResources: resources
+
+files:
+  - dist-electron/**/*
+  - dist-renderer/**/*
+  - package.json
+
+mac:
+  artifactName: "Morph-${version}-${arch}.${ext}"
+  category: public.app-category.productivity
+  icon: resources/icon.icns
+  target:
+    - dmg
+    - zip
+  darkModeSupport: true
+  hardenedRuntime: false
+
+win:
+  icon: resources/icon.ico
+  target:
+    - nsis
+
+nsis:
+  artifactName: "Morph-Setup-${version}.${ext}"
+  oneClick: true
+  perMachine: false
+
+linux:
+  artifactName: "Morph-${version}-${arch}.${ext}"
+  icon: resources
+  target:
+    - AppImage
+  category: Utility
+
+dmg:
+  window:
+    width: 540
+    height: 380
+  contents:
+    - x: 140
+      y: 250
+    - x: 400
+      y: 250
+      type: link
+      path: /Applications
+
+publish:
+  provider: github
+
+asar: true
+npmRebuild: true

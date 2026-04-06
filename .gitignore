@@ -1,0 +1,19 @@
+node_modules/
+dist/
+dist-electron/
+dist-renderer/
+*.db
+*.db-wal
+*.db-shm
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Env
+.env
+.env.local

@@ -1,0 +1,41 @@
+{
+  "name": "morph",
+  "version": "0.1.0",
+  "productName": "Morph",
+  "description": "AI-powered text rewriter — keyboard shortcut, clipboard in, rewritten text out",
+  "private": true,
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "electron:compile": "tsc -p electron/tsconfig.json",
+    "electron:dev": "npm run electron:compile && node electron/dev-start.js",
+    "electron:build": "npm run build && npm run electron:compile && electron-builder",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "groq-sdk": "^0.9.0",
+    "lucide-react": "^0.563.0",
+    "radix-ui": "^1.4.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^3.4.0",
+    "zustand": "^5.0.11"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4",
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4.4.0",
+    "concurrently": "^9.0.0",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "tailwindcss": "^4",
+    "typescript": "^5.9.3",
+    "wait-on": "^8.0.0"
+  }
+}

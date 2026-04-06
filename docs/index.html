@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Morph — Rewrite Anything, Instantly</title>
+  <meta name="description" content="AI-powered text rewriter. Global shortcut, clipboard in, rewritten text out. Built with Groq for lightning-fast rewrites." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-base: #0c0c0e;
+      --bg-surface: #16161a;
+      --bg-elevated: #1e1e24;
+      --violet: #7c5cfc;
+      --violet-light: #a78bfa;
+      --blue: #3b82f6;
+      --emerald: #10b981;
+      --glass-bg: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.06);
+      --text-primary: rgba(255, 255, 255, 0.92);
+      --text-secondary: rgba(255, 255, 255, 0.55);
+      --text-tertiary: rgba(255, 255, 255, 0.35);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    code, .mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* Ambient glows */
+    .glow {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(150px);
+      opacity: 0.1;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .glow-violet {
+      width: 700px; height: 700px;
+      background: var(--violet);
+      top: -250px; left: -150px;
+      animation: glowDrift1 12s ease-in-out infinite alternate;
+    }
+    .glow-blue {
+      width: 600px; height: 600px;
+      background: var(--blue);
+      top: 300px; right: -200px;
+      animation: glowDrift2 14s ease-in-out infinite alternate;
+    }
+    .glow-emerald {
+      width: 500px; height: 500px;
+      background: var(--emerald);
+      bottom: -200px; left: 30%;
+      animation: glowDrift3 16s ease-in-out infinite alternate;
+    }
+    @keyframes glowDrift1 { to { transform: translate(80px, 60px); opacity: 0.15; } }
+    @keyframes glowDrift2 { to { transform: translate(-60px, -80px); opacity: 0.13; } }
+    @keyframes glowDrift3 { to { transform: translate(40px, -50px); opacity: 0.08; } }
+
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 14px 24px;
+      background: rgba(12, 12, 14, 0.82);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--glass-border);
+    }
+    nav .inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    nav .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+    nav .brand .logo {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, var(--violet), var(--blue));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 14px; color: white;
+    }
+    nav .brand span { font-weight: 600; font-size: 16px; }
+    nav a.gh-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+    nav a.gh-link:hover { color: var(--text-primary); }
+
+    /* Scroll reveal */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.revealed { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+
+    /* Hero */
+    .hero {
+      padding: 160px 0 60px;
+      text-align: center;
+    }
+    .hero-icon {
+      width: 80px; height: 80px;
+      background: linear-gradient(135deg, var(--violet), var(--blue));
+      border-radius: 24px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 40px;
+      font-size: 36px;
+      box-shadow: 0 0 60px rgba(124, 92, 252, 0.3);
+    }
+    .hero h1 {
+      font-size: clamp(36px, 5.5vw, 64px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 20px;
+    }
+    .hero h1 .gradient {
+      background: linear-gradient(135deg, var(--violet), var(--violet-light), var(--blue));
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradientShift 6s ease-in-out infinite;
+    }
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .hero p.tagline {
+      font-size: 18px;
+      color: var(--text-secondary);
+      max-width: 540px;
+      margin: 0 auto 44px;
+      line-height: 1.7;
+    }
+    .hero-cta {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 26px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--violet), var(--blue));
+      color: white;
+      box-shadow: 0 0 20px rgba(124, 92, 252, 0.3), 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 0 40px rgba(124, 92, 252, 0.5), 0 8px 24px rgba(0, 0, 0, 0.4);
+      transform: translateY(-2px);
+    }
+    .btn-glass {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      color: var(--text-primary);
+      backdrop-filter: blur(20px);
+    }
+    .btn-glass:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(255, 255, 255, 0.12);
+      transform: translateY(-1px);
+    }
+
+    /* How it works */
+    .how-it-works {
+      padding: 100px 0 80px;
+    }
+    .how-it-works h2 {
+      text-align: center;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 56px;
+    }
+    .steps {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+    .step {
+      flex: 1;
+      text-align: center;
+    }
+    .step-number {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 700;
+      margin: 0 auto 20px;
+    }
+    .step:nth-child(1) .step-number {
+      background: rgba(124, 92, 252, 0.15); color: var(--violet);
+      border: 1px solid rgba(124, 92, 252, 0.3);
+    }
+    .step:nth-child(2) .step-number {
+      background: rgba(59, 130, 246, 0.15); color: var(--blue);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    .step:nth-child(3) .step-number {
+      background: rgba(16, 185, 129, 0.15); color: var(--emerald);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .step h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .step p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; max-width: 240px; margin: 0 auto; }
+
+    /* Features */
+    .features { padding: 80px 0; }
+    .features h2 { text-align: center; font-size: 28px; font-weight: 700; margin-bottom: 48px; }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(20px);
+      border-radius: 16px;
+      padding: 28px;
+      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+    }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+    .feature-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+    .feature-icon.violet { background: rgba(124, 92, 252, 0.15); }
+    .feature-icon.blue { background: rgba(59, 130, 246, 0.15); }
+    .feature-icon.emerald { background: rgba(16, 185, 129, 0.15); }
+    .feature-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+    .feature-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+    /* Shortcut demo */
+    .shortcut-demo {
+      padding: 80px 0;
+      text-align: center;
+    }
+    .kbd-combo {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .kbd {
+      display: inline-block;
+      padding: 8px 16px;
+      background: var(--bg-surface);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-primary);
+      box-shadow: 0 2px 0 rgba(255,255,255,0.04);
+    }
+    .kbd-plus { color: var(--text-tertiary); font-size: 14px; }
+    .shortcut-demo p { font-size: 16px; color: var(--text-secondary); max-width: 480px; margin: 0 auto; }
+
+    /* Download CTA */
+    .download {
+      padding: 80px 0 120px;
+      text-align: center;
+    }
+    .download h2 { font-size: 32px; font-weight: 700; margin-bottom: 16px; }
+    .download p { font-size: 16px; color: var(--text-secondary); margin-bottom: 32px; }
+    .download-buttons {
+      display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+    }
+    .download-buttons .btn .badge {
+      font-size: 11px; padding: 2px 6px; border-radius: 4px;
+      background: rgba(255,255,255,0.1); font-weight: 600;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--glass-border);
+      padding: 32px 24px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+    footer a { color: var(--text-secondary); text-decoration: none; }
+    footer a:hover { color: var(--text-primary); }
+
+    @media (max-width: 768px) {
+      .steps { flex-direction: column; gap: 40px; }
+      .hero { padding: 120px 0 40px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Ambient glows -->
+  <div class="glow glow-violet"></div>
+  <div class="glow glow-blue"></div>
+  <div class="glow glow-emerald"></div>
+
+  <!-- Nav -->
+  <nav>
+    <div class="inner">
+      <a class="brand" href="#">
+        <div class="logo">M</div>
+        <span>Morph</span>
+      </a>
+      <a class="gh-link" href="https://github.com/AjayKumar-DRB/Morph" target="_blank">GitHub</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-icon reveal">M</div>
+      <h1 class="reveal reveal-delay-1">Rewrite <span class="gradient">Anything</span>,<br/>Instantly</h1>
+      <p class="tagline reveal reveal-delay-2">
+        AI-powered text rewriter that lives in your menu bar.
+        One shortcut to transform any text on your clipboard.
+        Powered by Groq for lightning-fast results.
+      </p>
+      <div class="hero-cta reveal reveal-delay-3">
+        <a class="btn btn-primary" href="https://github.com/AjayKumar-DRB/Morph/releases/latest">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download for macOS
+        </a>
+        <a class="btn btn-glass" href="https://github.com/AjayKumar-DRB/Morph" target="_blank">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          View on GitHub
+        </a>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="how-it-works">
+      <h2 class="reveal">How It Works</h2>
+      <div class="steps">
+        <div class="step reveal reveal-delay-1">
+          <div class="step-number">1</div>
+          <h3>Trigger</h3>
+          <p>Press the global shortcut from anywhere. Morph reads your clipboard automatically.</p>
+        </div>
+        <div class="step reveal reveal-delay-2">
+          <div class="step-number">2</div>
+          <h3>Rewrite</h3>
+          <p>AI rewrites your text using your custom system prompt. Results stream in instantly.</p>
+        </div>
+        <div class="step reveal reveal-delay-3">
+          <div class="step-number">3</div>
+          <h3>Copy</h3>
+          <p>One click to copy the rewritten text back to your clipboard. Done.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Shortcut demo -->
+    <section class="shortcut-demo reveal">
+      <div class="kbd-combo">
+        <span class="kbd">&#8984;</span>
+        <span class="kbd-plus">+</span>
+        <span class="kbd">&#8679;</span>
+        <span class="kbd-plus">+</span>
+        <span class="kbd">M</span>
+      </div>
+      <p>Works from any app. Morph appears, rewrites, and disappears. Zero friction.</p>
+    </section>
+
+    <!-- Features -->
+    <section class="features">
+      <h2 class="reveal">Built for Speed</h2>
+      <div class="features-grid">
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-icon violet">&#9889;</div>
+          <h3>Groq-Powered</h3>
+          <p>Uses Groq's inference engine for near-instant rewrites. No waiting around.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-icon blue">&#127760;</div>
+          <h3>Global Shortcut</h3>
+          <p>Trigger from any app without switching windows. Reads clipboard automatically.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-3">
+          <div class="feature-icon emerald">&#128274;</div>
+          <h3>Fully Local</h3>
+          <p>No accounts, no cloud storage. Your API key and history stay on your machine in SQLite.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-icon violet">&#128221;</div>
+          <h3>Custom Prompts</h3>
+          <p>Set your own system prompt to match your voice, tone, or use case. Make it yours.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-icon blue">&#128197;</div>
+          <h3>History</h3>
+          <p>Every rewrite is saved locally. Browse and reuse past transformations anytime.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-3">
+          <div class="feature-icon emerald">&#128230;</div>
+          <h3>Lightweight</h3>
+          <p>Minimal Electron app. No heavy frameworks, no embedded servers. Just Vite + React.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Download -->
+    <section class="download reveal">
+      <h2>Get Morph</h2>
+      <p>Download the latest release for your platform.</p>
+      <div class="download-buttons">
+        <a class="btn btn-primary" href="https://github.com/AjayKumar-DRB/Morph/releases/latest">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          macOS <span class="badge">Apple Silicon + Intel</span>
+        </a>
+        <a class="btn btn-glass" href="https://github.com/AjayKumar-DRB/Morph/releases/latest">
+          Windows <span class="badge">x64</span>
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>Morph &mdash; Built with Electron, React, and Groq. <a href="https://github.com/AjayKumar-DRB/Morph" target="_blank">Source on GitHub</a></p>
+  </footer>
+
+  <!-- Scroll reveal script -->
+  <script>
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('revealed'); }),
+      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+    );
+    document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+  </script>
+</body>
+</html>
