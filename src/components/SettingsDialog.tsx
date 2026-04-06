@@ -38,6 +38,7 @@ export function SettingsDialog() {
   const [systemPrompt, setSystemPrompt] = useState("");
   const [model, setModel] = useState("");
   const [shortcut, setShortcut] = useState("");
+  const [autoClipboard, setAutoClipboard] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,6 +48,7 @@ export function SettingsDialog() {
       setSystemPrompt(config.systemPrompt);
       setModel(config.model);
       setShortcut(config.globalShortcut);
+      setAutoClipboard(config.autoClipboard ?? true);
       setError(null);
     }
   }, [settingsOpen, config]);
@@ -57,7 +59,7 @@ export function SettingsDialog() {
     setSaving(true);
     setError(null);
     try {
-      const updates: Record<string, unknown> = { systemPrompt, model, globalShortcut: shortcut };
+      const updates: Record<string, unknown> = { systemPrompt, model, globalShortcut: shortcut, autoClipboard };
       if (apiKey.trim()) updates.groqApiKey = apiKey.trim();
       await window.morph.setConfig(updates);
       await loadConfig();
@@ -181,6 +183,52 @@ export function SettingsDialog() {
               <p style={{ fontSize: 11, color: "var(--color-fg-muted)", marginTop: 8 }}>
                 Format: CommandOrControl+Shift+M
               </p>
+            </div>
+
+            {/* Auto Clipboard */}
+            <div>
+              <label style={labelStyle}>Behavior</label>
+              <button
+                onClick={() => setAutoClipboard(!autoClipboard)}
+                style={{
+                  width: "100%",
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "14px 16px",
+                  backgroundColor: "var(--color-surface)",
+                  border: "1px solid var(--color-border-subtle)",
+                  borderRadius: 12,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: "var(--color-fg)", textAlign: "left" }}>
+                    Auto-paste from clipboard
+                  </div>
+                  <div style={{ fontSize: 11, color: "var(--color-fg-muted)", marginTop: 4, textAlign: "left" }}>
+                    Automatically fill input with clipboard content on shortcut trigger
+                  </div>
+                </div>
+                <div
+                  style={{
+                    width: 40, height: 22, borderRadius: 11, flexShrink: 0, marginLeft: 16,
+                    backgroundColor: autoClipboard ? "var(--color-primary)" : "var(--color-border)",
+                    transition: "background-color 0.15s",
+                    position: "relative",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 18, height: 18, borderRadius: 9,
+                      backgroundColor: "white",
+                      position: "absolute", top: 2,
+                      left: autoClipboard ? 20 : 2,
+                      transition: "left 0.15s",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                    }}
+                  />
+                </div>
+              </button>
             </div>
 
             {error && (

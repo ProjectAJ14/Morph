@@ -22,6 +22,7 @@ app.setAboutPanelOptions({
   applicationName: APP_NAME,
   applicationVersion: require("../package.json").version,
   copyright: "Rewrite anything, instantly.",
+  iconPath: path.join(__dirname, "..", "resources", "icon.png"),
 });
 
 const isDev = !app.isPackaged;
@@ -53,10 +54,13 @@ function registerGlobalShortcut(shortcut: string): boolean {
       } else {
         mainWindow.show();
         mainWindow.focus();
-        // Read clipboard and send to renderer
-        const text = clipboard.readText();
-        if (text.trim()) {
-          mainWindow.webContents.send("clipboard:paste", text);
+        // Read clipboard and send to renderer (if auto-clipboard enabled)
+        const cfg = readConfig();
+        if (cfg.autoClipboard) {
+          const text = clipboard.readText();
+          if (text.trim()) {
+            mainWindow.webContents.send("clipboard:paste", text);
+          }
         }
       }
     });
@@ -215,6 +219,7 @@ function setupIpcHandlers(): void {
       ...config,
       groqApiKey: config.groqApiKey ? "••••" + config.groqApiKey.slice(-4) : "",
       groqApiKeySet: !!config.groqApiKey,
+      autoClipboard: config.autoClipboard,
     };
   });
 

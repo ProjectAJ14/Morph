@@ -11,6 +11,10 @@ files:
   - dist-renderer/**/*
   - package.json
 
+extraResources:
+  - from: resources/icon.png
+    to: icon.png
+
 mac:
   artifactName: "Morph-${version}-${arch}.${ext}"
   category: public.app-category.productivity

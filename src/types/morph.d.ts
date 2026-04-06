@@ -14,6 +14,7 @@ export interface MorphConfig {
   systemPrompt: string;
   model: string;
   globalShortcut: string;
+  autoClipboard: boolean;
   window: {
     width: number;
     height: number;

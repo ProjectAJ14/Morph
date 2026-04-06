@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Morph — Rewrite Anything, Instantly</title>
   <meta name="description" content="AI-powered text rewriter. Global shortcut, clipboard in, rewritten text out. Built with Groq for lightning-fast rewrites." />
+  <link rel="icon" type="image/png" href="icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -104,12 +105,9 @@
       text-decoration: none;
       color: var(--text-primary);
     }
-    nav .brand .logo {
+    nav .brand img {
       width: 28px; height: 28px;
-      background: linear-gradient(135deg, var(--violet), var(--blue));
       border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 14px; color: white;
     }
     nav .brand span { font-weight: 600; font-size: 16px; }
     nav a.gh-link {
@@ -137,14 +135,16 @@
       text-align: center;
     }
     .hero-icon {
-      width: 80px; height: 80px;
-      background: linear-gradient(135deg, var(--violet), var(--blue));
+      width: 100px; height: 100px;
       border-radius: 24px;
-      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
       margin: 0 auto 40px;
-      font-size: 36px;
       box-shadow: 0 0 60px rgba(124, 92, 252, 0.3);
       animation: iconFloat 4s ease-in-out infinite alternate;
+    }
+    .hero-icon img {
+      width: 100%; height: 100%;
+      object-fit: cover;
     }
     @keyframes iconFloat {
       0% { transform: translateY(0); }
@@ -531,7 +531,7 @@
   <nav>
     <div class="inner">
       <a class="brand" href="#">
-        <div class="logo">M</div>
+        <img src="icon.png" alt="Morph" />
         <span>Morph</span>
       </a>
       <a class="gh-link" href="https://github.com/ProjectAJ14/Morph" target="_blank" rel="noopener">GitHub &nearr;</a>
@@ -542,7 +542,7 @@
     <!-- Hero -->
     <section class="hero">
       <div class="container">
-        <div class="hero-icon reveal">M</div>
+        <div class="hero-icon reveal"><img src="icon.png" alt="Morph" /></div>
         <h1 class="reveal reveal-delay-1">Rewrite <span class="gradient">Anything</span>,<br/>Instantly</h1>
         <p class="tagline reveal reveal-delay-2">
           AI-powered text rewriter that lives in your menu bar.

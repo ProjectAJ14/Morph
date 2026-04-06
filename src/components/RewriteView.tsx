@@ -1,5 +1,5 @@
 import { useAppStore } from "../stores/app-store";
-import { Settings, Clock, Copy, Check, RotateCcw, ArrowUp, Loader2 } from "lucide-react";
+import { Copy, Check, RotateCcw, ArrowUp, Loader2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 export function RewriteView() {
@@ -12,8 +12,6 @@ export function RewriteView() {
     setOutputText,
     setLoading,
     setError,
-    setSettingsOpen,
-    setHistoryOpen,
     config,
   } = useAppStore();
 
@@ -88,29 +86,6 @@ export function RewriteView() {
         gap: 16,
       }}
     >
-      {/* Top bar */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-        <button onClick={() => setHistoryOpen(true)} style={toolbarBtnStyle}>
-          <Clock size={14} strokeWidth={2} />
-          <span style={{ fontSize: 13, fontWeight: 500 }}>History</span>
-        </button>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {!config?.groqApiKeySet && (
-            <span style={{
-              fontSize: 11, fontWeight: 600,
-              color: "var(--color-danger)", backgroundColor: "var(--color-danger-ghost)",
-              padding: "5px 12px", borderRadius: 99,
-            }}>
-              API key needed
-            </span>
-          )}
-          <button onClick={() => setSettingsOpen(true)} style={iconBtnStyle} title="Settings">
-            <Settings size={15} strokeWidth={2} />
-          </button>
-        </div>
-      </div>
-
       {/* Input textarea */}
       <div style={{ flexShrink: 0 }}>
         <textarea
@@ -267,18 +242,3 @@ export function RewriteView() {
   );
 }
 
-const toolbarBtnStyle: React.CSSProperties = {
-  display: "flex", alignItems: "center", gap: 8,
-  padding: "8px 14px", borderRadius: 8,
-  border: "none", backgroundColor: "transparent",
-  color: "var(--color-fg-muted)", cursor: "pointer",
-  transition: "all 0.15s", fontFamily: "inherit",
-};
-
-const iconBtnStyle: React.CSSProperties = {
-  display: "flex", alignItems: "center", justifyContent: "center",
-  width: 36, height: 36, borderRadius: 8,
-  border: "none", backgroundColor: "transparent",
-  color: "var(--color-fg-muted)", cursor: "pointer",
-  transition: "all 0.15s",
-};

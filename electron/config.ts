@@ -8,6 +8,7 @@ export interface MorphConfig {
   systemPrompt: string;
   model: string;
   globalShortcut: string;
+  autoClipboard: boolean;
   window: {
     width: number;
     height: number;
@@ -22,6 +23,7 @@ const DEFAULT_CONFIG: MorphConfig = {
   systemPrompt: "You are a professional rewriter. Rewrite the given text to be clearer, more concise, and more professional while preserving the original meaning.",
   model: "llama-3.3-70b-versatile",
   globalShortcut: "CommandOrControl+Shift+M",
+  autoClipboard: true,
   window: {
     width: 680,
     height: 620,
