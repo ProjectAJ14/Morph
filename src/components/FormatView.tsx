@@ -11,10 +11,10 @@ function TeamsIcon({ size = 22 }: { size?: number }) {
   );
 }
 
-const TARGETS: { id: Target; label: string; hint: string; color: string; icon: React.ReactNode }[] = [
-  { id: "slack", label: "Slack", hint: "mrkdwn, code blocks for tables", color: "#36C5F0", icon: <Slack size={22} strokeWidth={1.8} /> },
-  { id: "teams", label: "Teams", hint: "rich text with real tables", color: "#6264A7", icon: <TeamsIcon /> },
-  { id: "generic", label: "Generic", hint: "clean standard Markdown", color: "#8b8b95", icon: <FileText size={22} strokeWidth={1.8} /> },
+const TARGETS: { id: Target; label: string; hint: string; color: string; glow: string; icon: React.ReactNode }[] = [
+  { id: "slack", label: "Slack", hint: "mrkdwn, code blocks for tables", color: "#36C5F0", glow: "54 197 240", icon: <Slack size={22} strokeWidth={1.8} /> },
+  { id: "teams", label: "Teams", hint: "rich text with real tables", color: "#6264A7", glow: "98 100 167", icon: <TeamsIcon /> },
+  { id: "generic", label: "Generic", hint: "clean standard Markdown", color: "#8b8b95", glow: "139 139 149", icon: <FileText size={22} strokeWidth={1.8} /> },
 ];
 
 export function FormatView() {
@@ -65,12 +65,15 @@ export function FormatView() {
       ) : (
         TARGETS.map((t) => {
           const isThis = (status.kind === "working" || status.kind === "done") && status.target === t.id;
+          const phase = isThis ? (status.kind === "working" ? "is-working" : "is-done") : "";
           return (
             <button
               key={t.id}
               onClick={() => runFormat(t.id)}
               disabled={working}
+              className={`fmt-btn ${phase}`}
               style={{
+                ["--glow-rgb" as any]: t.glow,
                 display: "flex",
                 alignItems: "center",
                 gap: 14,
@@ -82,7 +85,6 @@ export function FormatView() {
                 color: "var(--color-fg)",
                 cursor: working ? "default" : "pointer",
                 opacity: working && !isThis ? 0.4 : 1,
-                transition: "all 0.15s",
                 fontFamily: "inherit",
                 textAlign: "left",
               }}
@@ -93,17 +95,29 @@ export function FormatView() {
                 e.currentTarget.style.backgroundColor = "var(--color-surface)";
               }}
             >
-              <span style={{ color: t.color, display: "flex", flexShrink: 0 }}>{t.icon}</span>
+              <span className="fmt-icon" style={{ color: t.color, display: "flex", flexShrink: 0 }}>
+                {t.icon}
+              </span>
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: "block", fontSize: 14, fontWeight: 550 }}>{t.label}</span>
                 <span style={{ display: "block", fontSize: 11.5, color: "var(--color-fg-muted)", marginTop: 2 }}>
                   {t.hint}
                 </span>
               </span>
-              {isThis && status.kind === "working" && (
-                <Loader2 size={16} color="var(--color-fg-muted)" className="spin" />
-              )}
-              {isThis && status.kind === "done" && <Check size={16} color="var(--color-success)" />}
+              <span
+                style={{
+                  width: 18,
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {isThis && status.kind === "working" && (
+                  <Loader2 size={15} color={t.color} className="spin" />
+                )}
+                {isThis && status.kind === "done" && <Check size={16} color="var(--color-success)" />}
+              </span>
             </button>
           );
         })

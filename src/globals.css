@@ -58,3 +58,66 @@ textarea { resize: none; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin { animation: spin 0.8s linear infinite; }
+
+/* Format buttons — the pressed one glows in its brand color while working.
+   --glow-rgb is set per button; the status slot has a fixed width so nothing shifts. */
+.fmt-btn {
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.15s, opacity 0.15s, transform 0.1s;
+}
+.fmt-btn:active:not(:disabled) { transform: scale(0.985); }
+
+@keyframes fmt-pulse {
+  0%, 100% {
+    border-color: rgb(var(--glow-rgb) / 0.35);
+    box-shadow: 0 0 0 0 rgb(var(--glow-rgb) / 0), 0 0 10px -4px rgb(var(--glow-rgb) / 0.4);
+  }
+  50% {
+    border-color: rgb(var(--glow-rgb) / 0.9);
+    box-shadow: 0 0 0 3px rgb(var(--glow-rgb) / 0.12), 0 0 22px -2px rgb(var(--glow-rgb) / 0.55);
+  }
+}
+
+/* Light sweeping across the button, so it reads as "in progress" not just "highlighted" */
+@keyframes fmt-sweep {
+  from { transform: translateX(-120%); }
+  to   { transform: translateX(220%); }
+}
+
+.fmt-btn.is-working {
+  animation: fmt-pulse 1.4s ease-in-out infinite;
+}
+.fmt-btn.is-working::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 45%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgb(var(--glow-rgb) / 0.14), transparent);
+  animation: fmt-sweep 1.4s ease-in-out infinite;
+}
+
+@keyframes fmt-settle {
+  0%   { box-shadow: 0 0 0 3px var(--color-success-ghost), 0 0 24px -2px var(--color-success); }
+  100% { box-shadow: 0 0 0 0 transparent, 0 0 0 0 transparent; }
+}
+.fmt-btn.is-done {
+  border-color: var(--color-success);
+  animation: fmt-settle 0.85s ease-out forwards;
+}
+
+/* Icon breathes with the pulse */
+@keyframes fmt-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(0.94); }
+  50%      { opacity: 1;    transform: scale(1.06); }
+}
+.fmt-btn.is-working .fmt-icon { animation: fmt-breathe 1.4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fmt-btn.is-working,
+  .fmt-btn.is-working::after,
+  .fmt-btn.is-working .fmt-icon,
+  .fmt-btn.is-done { animation: none; }
+  .fmt-btn.is-working { border-color: rgb(var(--glow-rgb) / 0.9); }
+}
