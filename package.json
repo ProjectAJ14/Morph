@@ -1,6 +1,6 @@
 {
   "name": "morph",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "productName": "Morph",
   "description": "Formats your clipboard for Slack, Teams, or plain Markdown \u2014 copy, click, paste",
   "private": true,

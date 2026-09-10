@@ -5,6 +5,41 @@ All notable changes to Morph will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-09-10
+
+### Features
+- Reimagined home screen — three target buttons (Slack, Teams, Generic) replace the text editor
+  entirely. Copy a message, click a target, and the formatted version replaces your clipboard
+- Per-platform formatting: Slack gets mrkdwn with aligned code blocks instead of tables, Teams gets
+  real tables, Generic gets standard Markdown
+- Rich clipboard writes — both `text/html` and `text/plain` flavors, so bold, lists, code blocks and
+  tables survive the paste into Slack and Teams
+- Anthropic provider support (Claude Opus 5, Sonnet 5, Haiku 4.5) alongside Groq. Each provider keeps
+  its own key and model; pick the active one in Settings
+- Settings reorganized into Providers / Prompts / General tabs, with editable per-target prompts
+- Window auto-hides once the clipboard is replaced
+
+### UI/UX
+- Pressed button glows and pulses in its brand color while formatting, with a sweeping highlight and
+  a green settle on success — the button stays in place, so no layout shift
+- Fixed-width status slot keeps buttons from reflowing when the spinner appears
+- Honors `prefers-reduced-motion`
+- History rows show their target and confirm re-copies inline; clicking one puts it back on the
+  clipboard in its original target format
+
+### Breaking Changes
+- The rewrite editor, streaming output, and auto-paste toggle are gone
+- Config migrates automatically: v1's `groqApiKey` / `model` / `systemPrompt` fold into the new
+  providers map, and the active provider becomes Anthropic. Your Groq key is preserved but inactive
+
+### Internal
+- `electron/providers.ts` — Anthropic + Groq adapters behind one `complete()` call
+- `electron/clipboard-format.ts` + `electron/mrkdwn.ts` — clipboard flavors and Markdown → mrkdwn,
+  with an assert-based self-check (`npm run check`)
+- Removed streaming IPC, `electron/groq.ts`, `RewriteView.tsx`, and dead clipboard bridge methods
+- `rewrites` table gains a `target` column via in-place migration
+- Swapped `marked` for `markdown-it` (CommonJS, works in the Electron main process)
+
 ## [0.2.1] - 2026-04-06
 
 ### Bug Fixes
