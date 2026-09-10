@@ -55,3 +55,6 @@ body {
 
 textarea { resize: none; }
 ::selection { background: rgba(124, 92, 252, 0.3); }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 0.8s linear infinite; }

@@ -1,15 +1,9 @@
 import { useAppStore } from "../stores/app-store";
-import { Plus, Clock, Settings } from "lucide-react";
+import { Clock, Settings } from "lucide-react";
 import logoImg from "../icon.png";
 
 export function Sidebar() {
-  const { setHistoryOpen, setSettingsOpen, setInputText, setOutputText, setError, config } = useAppStore();
-
-  const handleNew = () => {
-    setInputText("");
-    setOutputText("");
-    setError(null);
-  };
+  const { setHistoryOpen, setSettingsOpen, config } = useAppStore();
 
   return (
     <div
@@ -49,7 +43,6 @@ export function Sidebar() {
 
       {/* Top icons */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-        <SidebarButton icon={<Plus size={18} strokeWidth={2} />} tooltip="New chat" onClick={handleNew} />
         <SidebarButton icon={<Clock size={18} strokeWidth={1.8} />} tooltip="History" onClick={() => setHistoryOpen(true)} />
       </div>
 
@@ -58,7 +51,7 @@ export function Sidebar() {
 
       {/* Bottom icons */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-        {!config?.groqApiKeySet && (
+        {config && !config.providers[config.activeProvider]?.apiKeySet && (
           <div style={{
             width: 8, height: 8, borderRadius: 4,
             backgroundColor: "var(--color-danger)",
@@ -88,7 +81,7 @@ function SidebarButton({ icon, tooltip, onClick }: { icon: React.ReactNode; tool
         alignItems: "center",
         justifyContent: "center",
         transition: "all 0.15s",
-        WebkitAppRegion: "no-drag" as any,
+        WebkitAppRegion: "no-drag",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.backgroundColor = "var(--color-surface)";

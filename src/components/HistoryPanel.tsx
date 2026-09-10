@@ -1,25 +1,18 @@
 import { useState } from "react";
 import { useAppStore } from "../stores/app-store";
-import { X, Trash2, Clock } from "lucide-react";
+import { X, Trash2, Clock, Check } from "lucide-react";
+import type { Target } from "../types/morph";
 
 export function HistoryPanel() {
-  const {
-    historyOpen,
-    setHistoryOpen,
-    history,
-    loadHistory,
-    setInputText,
-    setOutputText,
-    reset,
-  } = useAppStore();
+  const { historyOpen, setHistoryOpen, history, loadHistory } = useAppStore();
+  const [copiedId, setCopiedId] = useState<number | null>(null);
 
   if (!historyOpen) return null;
 
-  const handleSelect = (item: (typeof history)[0]) => {
-    reset();
-    setInputText(item.input_text);
-    setOutputText(item.output_text);
-    setHistoryOpen(false);
+  // Panel stays open — the check mark is the only signal that the clipboard changed.
+  const handleSelect = async (item: (typeof history)[0]) => {
+    await window.morph.writeClipboardFormatted(item.output_text, (item.target as Target) || "generic");
+    setCopiedId(item.id);
   };
 
   const handleDelete = async (e: React.MouseEvent, id: number) => {
@@ -60,7 +53,7 @@ export function HistoryPanel() {
         display: "flex",
         alignItems: "stretch",
         justifyContent: "flex-end",
-        WebkitAppRegion: "no-drag" as any,
+        WebkitAppRegion: "no-drag",
       }}
     >
       <div
@@ -117,7 +110,7 @@ export function HistoryPanel() {
               }}>
                 <Clock size={20} style={{ color: "var(--color-fg-muted)" }} />
               </div>
-              <span style={{ fontSize: 13, color: "var(--color-fg-muted)" }}>No rewrites yet</span>
+              <span style={{ fontSize: 13, color: "var(--color-fg-muted)" }}>Nothing formatted yet</span>
             </div>
           ) : (
             <div style={{ padding: "8px 0" }}>
@@ -125,6 +118,7 @@ export function HistoryPanel() {
                 <HistoryItem
                   key={item.id}
                   item={item}
+                  copied={copiedId === item.id}
                   onSelect={handleSelect}
                   onDelete={handleDelete}
                   formatDate={formatDate}
@@ -140,11 +134,13 @@ export function HistoryPanel() {
 
 function HistoryItem({
   item,
+  copied,
   onSelect,
   onDelete,
   formatDate,
 }: {
   item: any;
+  copied: boolean;
   onSelect: (item: any) => void;
   onDelete: (e: React.MouseEvent, id: number) => void;
   formatDate: (date: string) => string;
@@ -196,8 +192,15 @@ function HistoryItem({
           </button>
         )}
       </div>
-      <p style={{ fontSize: 11, color: "var(--color-fg-muted)", marginTop: 6, fontWeight: 500 }}>
-        {formatDate(item.created_at)}
+      <p style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "var(--color-fg-muted)", marginTop: 6, fontWeight: 500 }}>
+        <span style={{ textTransform: "capitalize" }}>{item.target || "generic"}</span>
+        <span>·</span>
+        <span>{formatDate(item.created_at)}</span>
+        {copied && (
+          <span style={{ display: "flex", alignItems: "center", gap: 4, color: "var(--color-success)" }}>
+            <Check size={11} /> copied
+          </span>
+        )}
       </p>
     </button>
   );

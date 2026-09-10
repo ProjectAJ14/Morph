@@ -9,9 +9,10 @@ import {
   shell,
 } from "electron";
 import * as path from "path";
-import { readConfig, writeConfig, saveWindowBounds, MorphConfig } from "./config";
+import { readConfig, writeConfig, saveWindowBounds, MorphConfig, Target } from "./config";
 import { getDb, insertRewrite, getHistory, deleteRewrite, clearHistory, closeDb } from "./database";
-import { streamRewrite } from "./groq";
+import { complete, PROVIDER_MODELS, PROVIDER_LABELS } from "./providers";
+import { writeFormatted } from "./clipboard-format";
 
 process.on("uncaughtException", (err) => console.error("[Morph] Uncaught exception:", err));
 process.on("unhandledRejection", (reason) => console.error("[Morph] Unhandled rejection:", reason));
@@ -21,7 +22,7 @@ app.setName(APP_NAME);
 app.setAboutPanelOptions({
   applicationName: APP_NAME,
   applicationVersion: require("../package.json").version,
-  copyright: "Rewrite anything, instantly.",
+  copyright: "Copy. Click. Paste.",
   iconPath: path.join(__dirname, "..", "resources", "icon.png"),
 });
 
@@ -54,14 +55,6 @@ function registerGlobalShortcut(shortcut: string): boolean {
       } else {
         mainWindow.show();
         mainWindow.focus();
-        // Read clipboard and send to renderer (if auto-clipboard enabled)
-        const cfg = readConfig();
-        if (cfg.autoClipboard) {
-          const text = clipboard.readText();
-          if (text.trim()) {
-            mainWindow.webContents.send("clipboard:paste", text);
-          }
-        }
       }
     });
   } catch (err) {
@@ -184,30 +177,32 @@ async function createWindow(): Promise<void> {
   }
 }
 
+function maskKey(key: string): string {
+  return key ? "\u2022\u2022\u2022\u2022" + key.slice(-4) : "";
+}
+
 function setupIpcHandlers(): void {
-  // Groq rewrite
-  ipcMain.handle("groq:rewrite", async (_event, text: string, systemPromptOverride?: string) => {
+  // Clipboard in -> formatted for the target -> clipboard out
+  ipcMain.handle("format:run", async (_event, target: Target) => {
     const config = readConfig();
-    if (!config.groqApiKey) {
-      mainWindow?.webContents.send("groq:stream-error", "No API key configured. Open settings to add your Groq API key.");
-      throw new Error("No API key configured");
+    const input = clipboard.readText();
+    if (!input.trim()) {
+      throw new Error("Clipboard is empty. Copy the message you want to format first.");
     }
-    const systemPrompt = systemPromptOverride || config.systemPrompt;
-    try {
-      const fullResponse = await streamRewrite(config.groqApiKey, config.model, systemPrompt, text, mainWindow!);
-      // Save to database
-      insertRewrite(text, fullResponse, systemPrompt, config.model);
-      return fullResponse;
-    } catch (err: any) {
-      const errorMsg = err?.message || "Unknown error during rewrite";
-      mainWindow?.webContents.send("groq:stream-error", errorMsg);
-      throw err;
-    }
+    const systemPrompt = config.prompts[target];
+    const output = await complete(config, systemPrompt, input);
+    writeFormatted(output, target);
+    insertRewrite(input, output, systemPrompt, config.providers[config.activeProvider].model, target);
+    return output;
   });
 
-  // Clipboard
-  ipcMain.handle("clipboard:read", () => clipboard.readText());
-  ipcMain.handle("clipboard:write", (_event, text: string) => clipboard.writeText(text));
+  // Hide the window once the renderer has shown its confirmation
+  ipcMain.handle("window:hide", () => mainWindow?.hide());
+
+  // Re-copy a past result, formatted for its original target
+  ipcMain.handle("clipboard:write-formatted", (_event, markdown: string, target: Target) =>
+    writeFormatted(markdown, target)
+  );
 
   // Database
   ipcMain.handle("db:get-history", (_event, limit?: number, offset?: number) =>
@@ -216,27 +211,45 @@ function setupIpcHandlers(): void {
   ipcMain.handle("db:delete-history", (_event, id: number) => deleteRewrite(id));
   ipcMain.handle("db:clear-history", () => clearHistory());
 
-  // Config
+  // Config — API keys are masked on the way out, never sent to the renderer in full
   ipcMain.handle("config:get", () => {
     const config = readConfig();
-    // Don't expose full API key to renderer — mask it
     return {
       ...config,
-      groqApiKey: config.groqApiKey ? "••••" + config.groqApiKey.slice(-4) : "",
-      groqApiKeySet: !!config.groqApiKey,
-      autoClipboard: config.autoClipboard,
+      providers: Object.fromEntries(
+        Object.entries(config.providers).map(([id, p]) => [
+          id,
+          { model: p.model, apiKey: maskKey(p.apiKey), apiKeySet: !!p.apiKey },
+        ])
+      ),
+      providerModels: PROVIDER_MODELS,
+      providerLabels: PROVIDER_LABELS,
     };
   });
 
   ipcMain.handle("config:set", (_event, partial: Partial<MorphConfig>) => {
     const config = readConfig();
-    const updated = { ...config, ...partial };
 
-    // Re-register global shortcut if changed
+    // Nested maps need merging, not replacing — the renderer sends only what changed.
+    const providers = { ...config.providers };
+    for (const [id, incoming] of Object.entries(partial.providers ?? {})) {
+      const current = providers[id as keyof typeof providers];
+      providers[id as keyof typeof providers] = {
+        model: incoming.model ?? current.model,
+        // An empty apiKey means "leave it alone" — the renderer only ever sees a mask.
+        apiKey: incoming.apiKey ? incoming.apiKey : current.apiKey,
+      };
+    }
+
+    const updated: MorphConfig = {
+      ...config,
+      ...partial,
+      providers,
+      prompts: { ...config.prompts, ...partial.prompts },
+    };
+
     if (partial.globalShortcut && partial.globalShortcut !== config.globalShortcut) {
-      const success = registerGlobalShortcut(partial.globalShortcut);
-      if (!success) {
-        // Revert to old shortcut
+      if (!registerGlobalShortcut(partial.globalShortcut)) {
         registerGlobalShortcut(config.globalShortcut);
         throw new Error(`Failed to register shortcut: ${partial.globalShortcut}`);
       }

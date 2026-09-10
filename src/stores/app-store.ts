@@ -1,55 +1,57 @@
 import { create } from "zustand";
-import type { RewriteRecord, MorphConfig } from "../types/morph";
+import type { RewriteRecord, MorphConfig, Target } from "../types/morph";
+
+type Status = { kind: "idle" } | { kind: "working"; target: Target } | { kind: "done"; target: Target } | { kind: "error"; message: string };
 
 interface AppState {
-  // Rewrite state
-  inputText: string;
-  outputText: string;
-  isLoading: boolean;
-  error: string | null;
-
-  // UI state
+  status: Status;
   settingsOpen: boolean;
   historyOpen: boolean;
   history: RewriteRecord[];
   config: MorphConfig | null;
 
-  // Actions
-  setInputText: (text: string) => void;
-  setOutputText: (text: string) => void;
-  appendOutputChunk: (chunk: string) => void;
-  setLoading: (loading: boolean) => void;
-  setError: (error: string | null) => void;
+  runFormat: (target: Target) => Promise<void>;
   setSettingsOpen: (open: boolean) => void;
   setHistoryOpen: (open: boolean) => void;
   loadHistory: () => Promise<void>;
   loadConfig: () => Promise<void>;
-  reset: () => void;
+  clearStatus: () => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
-  inputText: "",
-  outputText: "",
-  isLoading: false,
-  error: null,
+export const useAppStore = create<AppState>((set, get) => ({
+  status: { kind: "idle" },
   settingsOpen: false,
   historyOpen: false,
   history: [],
   config: null,
 
-  setInputText: (text) => set({ inputText: text }),
-  setOutputText: (text) => set({ outputText: text }),
-  appendOutputChunk: (chunk) =>
-    set((state) => ({ outputText: state.outputText + chunk })),
-  setLoading: (loading) => set({ isLoading: loading }),
-  setError: (error) => set({ error }),
+  runFormat: async (target) => {
+    if (get().status.kind === "working") return;
+    set({ status: { kind: "working", target } });
+    try {
+      await window.morph.format(target);
+      set({ status: { kind: "done", target } });
+      get().loadHistory();
+      // Let the confirmation land, then get out of the way.
+      setTimeout(async () => {
+        await window.morph.hideWindow();
+        set({ status: { kind: "idle" } });
+      }, 850);
+    } catch (err: any) {
+      // Electron wraps handler errors: "Error invoking remote method 'x': Error: real message"
+      const message = String(err?.message ?? "Something went wrong")
+        .replace(/^Error invoking remote method '[^']*':\s*(Error:\s*)?/, "");
+      set({ status: { kind: "error", message } });
+    }
+  },
+
   setSettingsOpen: (open) => set({ settingsOpen: open }),
   setHistoryOpen: (open) => set({ historyOpen: open }),
+  clearStatus: () => set({ status: { kind: "idle" } }),
 
   loadHistory: async () => {
     try {
-      const history = await window.morph.getHistory(50, 0);
-      set({ history });
+      set({ history: await window.morph.getHistory(50, 0) });
     } catch (err) {
       console.error("Failed to load history:", err);
     }
@@ -57,12 +59,9 @@ export const useAppStore = create<AppState>((set) => ({
 
   loadConfig: async () => {
     try {
-      const config = await window.morph.getConfig();
-      set({ config });
+      set({ config: await window.morph.getConfig() });
     } catch (err) {
       console.error("Failed to load config:", err);
     }
   },
-
-  reset: () => set({ outputText: "", error: null }),
 }));

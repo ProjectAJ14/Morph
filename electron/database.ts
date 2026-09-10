@@ -10,6 +10,7 @@ export interface RewriteRecord {
   output_text: string;
   system_prompt: string;
   model: string;
+  target: string;
   created_at: string;
 }
 
@@ -35,15 +36,28 @@ export function getDb(): Database.Database {
     CREATE INDEX IF NOT EXISTS idx_rewrites_created_at ON rewrites(created_at DESC);
   `);
 
+  // v1 rows predate the target column
+  try {
+    db.exec("ALTER TABLE rewrites ADD COLUMN target TEXT NOT NULL DEFAULT 'generic'");
+  } catch {
+    // already there
+  }
+
   return db;
 }
 
-export function insertRewrite(input: string, output: string, systemPrompt: string, model: string): RewriteRecord {
+export function insertRewrite(
+  input: string,
+  output: string,
+  systemPrompt: string,
+  model: string,
+  target: string
+): RewriteRecord {
   const db = getDb();
   const stmt = db.prepare(
-    "INSERT INTO rewrites (input_text, output_text, system_prompt, model) VALUES (?, ?, ?, ?)"
+    "INSERT INTO rewrites (input_text, output_text, system_prompt, model, target) VALUES (?, ?, ?, ?, ?)"
   );
-  const result = stmt.run(input, output, systemPrompt, model);
+  const result = stmt.run(input, output, systemPrompt, model, target);
   return db.prepare("SELECT * FROM rewrites WHERE id = ?").get(result.lastInsertRowid) as RewriteRecord;
 }
 

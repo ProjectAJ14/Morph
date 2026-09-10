@@ -1,13 +1,22 @@
 import { useAppStore } from "../stores/app-store";
-import { X } from "lucide-react";
+import { X, Check } from "lucide-react";
 import { useState, useEffect } from "react";
+import type { ProviderId, Target } from "../types/morph";
 
-const MODELS = [
-  { id: "llama-3.3-70b-versatile", label: "Llama 3.3 70B" },
-  { id: "llama-3.1-8b-instant", label: "Llama 3.1 8B" },
-  { id: "mixtral-8x7b-32768", label: "Mixtral 8x7B" },
-  { id: "gemma2-9b-it", label: "Gemma 2 9B" },
+const PROVIDER_IDS: ProviderId[] = ["anthropic", "groq"];
+const KEY_PLACEHOLDER: Record<ProviderId, string> = { anthropic: "sk-ant-...", groq: "gsk_..." };
+const KEY_SOURCE: Record<ProviderId, string> = {
+  anthropic: "console.anthropic.com",
+  groq: "console.groq.com",
+};
+
+const TARGETS: { id: Target; label: string }[] = [
+  { id: "slack", label: "Slack" },
+  { id: "teams", label: "Teams" },
+  { id: "generic", label: "Generic" },
 ];
+
+type Tab = "providers" | "prompts" | "general";
 
 const fieldInput: React.CSSProperties = {
   width: "100%",
@@ -34,34 +43,42 @@ const labelStyle: React.CSSProperties = {
 
 export function SettingsDialog() {
   const { settingsOpen, setSettingsOpen, config, loadConfig } = useAppStore();
-  const [apiKey, setApiKey] = useState("");
-  const [systemPrompt, setSystemPrompt] = useState("");
-  const [model, setModel] = useState("");
+  const [tab, setTab] = useState<Tab>("providers");
+  const [activeProvider, setActiveProvider] = useState<ProviderId>("anthropic");
+  const [keys, setKeys] = useState<Record<string, string>>({});
+  const [models, setModels] = useState<Record<string, string>>({});
+  const [prompts, setPrompts] = useState<Record<string, string>>({});
+  const [promptTarget, setPromptTarget] = useState<Target>("slack");
   const [shortcut, setShortcut] = useState("");
-  const [autoClipboard, setAutoClipboard] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (settingsOpen && config) {
-      setApiKey("");
-      setSystemPrompt(config.systemPrompt);
-      setModel(config.model);
+      setActiveProvider(config.activeProvider);
+      setKeys({});
+      setModels(Object.fromEntries(PROVIDER_IDS.map((id) => [id, config.providers[id].model])));
+      setPrompts({ ...config.prompts });
       setShortcut(config.globalShortcut);
-      setAutoClipboard(config.autoClipboard ?? true);
       setError(null);
     }
   }, [settingsOpen, config]);
 
-  if (!settingsOpen) return null;
+  if (!settingsOpen || !config) return null;
 
   const handleSave = async () => {
     setSaving(true);
     setError(null);
     try {
-      const updates: Record<string, unknown> = { systemPrompt, model, globalShortcut: shortcut, autoClipboard };
-      if (apiKey.trim()) updates.groqApiKey = apiKey.trim();
-      await window.morph.setConfig(updates);
+      await window.morph.setConfig({
+        activeProvider,
+        globalShortcut: shortcut,
+        prompts,
+        providers: Object.fromEntries(
+          // An empty apiKey tells main to keep the stored one.
+          PROVIDER_IDS.map((id) => [id, { model: models[id], apiKey: (keys[id] ?? "").trim() }])
+        ),
+      });
       await loadConfig();
       setSettingsOpen(false);
     } catch (err: any) {
@@ -83,7 +100,7 @@ export function SettingsDialog() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        WebkitAppRegion: "no-drag" as any,
+        WebkitAppRegion: "no-drag",
       }}
     >
       <div
@@ -91,14 +108,16 @@ export function SettingsDialog() {
           backgroundColor: "var(--color-bg)",
           border: "1px solid var(--color-border)",
           borderRadius: 20,
-          width: 460,
-          maxHeight: "85vh",
+          width: 480,
+          maxHeight: "88vh",
+          display: "flex",
+          flexDirection: "column",
           overflow: "hidden",
           boxShadow: "0 24px 48px rgba(0,0,0,0.4)",
         }}
       >
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "24px 28px 20px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "22px 28px 16px" }}>
           <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--color-fg)" }}>Settings</h2>
           <button
             onClick={() => setSettingsOpen(false)}
@@ -113,123 +132,173 @@ export function SettingsDialog() {
           </button>
         </div>
 
-        <div style={{ height: 1, backgroundColor: "var(--color-border-subtle)", margin: "0 28px" }} />
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: 4, padding: "0 28px 14px" }}>
+          {([["providers", "Providers"], ["prompts", "Prompts"], ["general", "General"]] as const).map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              style={{
+                padding: "7px 14px",
+                fontSize: 12,
+                fontWeight: 550,
+                borderRadius: 99,
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                backgroundColor: tab === id ? "var(--color-surface-hover)" : "transparent",
+                color: tab === id ? "var(--color-fg)" : "var(--color-fg-muted)",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ height: 1, backgroundColor: "var(--color-border-subtle)" }} />
 
         {/* Body */}
-        <div style={{ padding: "24px 28px", overflowY: "auto", maxHeight: "calc(85vh - 150px)" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-            {/* API Key */}
-            <div>
-              <label style={labelStyle}>Groq API Key</label>
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder={config?.groqApiKeySet ? "Leave blank to keep current key" : "gsk_..."}
-                style={fieldInput}
-              />
-              <p style={{ fontSize: 11, color: "var(--color-fg-muted)", marginTop: 8 }}>
-                Get your key at console.groq.com
-              </p>
-            </div>
+        <div style={{ padding: "22px 28px", overflowY: "auto", flex: 1, minHeight: 0 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+            {tab === "providers" && (
+              <>
+                <div>
+                  <label style={labelStyle}>Active provider</label>
+                  <div style={{ display: "grid", gridTemplateColumns: `repeat(${PROVIDER_IDS.length}, 1fr)`, gap: 10 }}>
+                    {PROVIDER_IDS.map((id) => {
+                      const on = activeProvider === id;
+                      return (
+                        <button
+                          key={id}
+                          onClick={() => setActiveProvider(id)}
+                          style={{
+                            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+                            padding: "12px 14px", borderRadius: 12, fontSize: 13, fontWeight: 550,
+                            cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
+                            border: on ? "1px solid rgba(124, 92, 252, 0.3)" : "1px solid var(--color-border-subtle)",
+                            backgroundColor: on ? "var(--color-primary-ghost)" : "var(--color-surface)",
+                            color: on ? "var(--color-primary)" : "var(--color-fg-secondary)",
+                          }}
+                        >
+                          {config.providerLabels[id]}
+                          {on && <Check size={14} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-            {/* System Prompt */}
-            <div>
-              <label style={labelStyle}>System Prompt</label>
-              <textarea
-                value={systemPrompt}
-                onChange={(e) => setSystemPrompt(e.target.value)}
-                rows={4}
-                style={{ ...fieldInput, resize: "none", lineHeight: 1.6 }}
-              />
-            </div>
-
-            {/* Model */}
-            <div>
-              <label style={labelStyle}>Model</label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                {MODELS.map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => setModel(m.id)}
+                {PROVIDER_IDS.map((id) => (
+                  <div
+                    key={id}
                     style={{
-                      padding: "12px 16px",
-                      borderRadius: 12,
-                      fontSize: 12,
-                      fontWeight: 500,
-                      textAlign: "left" as const,
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                      transition: "all 0.15s",
-                      border: model === m.id ? "1px solid rgba(124, 92, 252, 0.3)" : "1px solid var(--color-border-subtle)",
-                      backgroundColor: model === m.id ? "var(--color-primary-ghost)" : "var(--color-surface)",
-                      color: model === m.id ? "var(--color-primary)" : "var(--color-fg-secondary)",
+                      padding: 16,
+                      borderRadius: 14,
+                      border: "1px solid var(--color-border-subtle)",
+                      backgroundColor: activeProvider === id ? "var(--color-surface)" : "transparent",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 14,
                     }}
                   >
-                    {m.label}
-                  </button>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--color-fg)" }}>
+                        {config.providerLabels[id]}
+                      </span>
+                      {config.providers[id].apiKeySet ? (
+                        <span style={{ fontSize: 11, color: "var(--color-success)" }}>
+                          key saved {config.providers[id].apiKey}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: 11, color: "var(--color-fg-muted)" }}>no key</span>
+                      )}
+                    </div>
+
+                    <input
+                      type="password"
+                      value={keys[id] ?? ""}
+                      onChange={(e) => setKeys({ ...keys, [id]: e.target.value })}
+                      placeholder={
+                        config.providers[id].apiKeySet
+                          ? "Leave blank to keep current key"
+                          : `${KEY_PLACEHOLDER[id]}  —  from ${KEY_SOURCE[id]}`
+                      }
+                      style={fieldInput}
+                    />
+
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {config.providerModels[id].map((m) => {
+                        const on = models[id] === m.id;
+                        return (
+                          <button
+                            key={m.id}
+                            onClick={() => setModels({ ...models, [id]: m.id })}
+                            style={{
+                              padding: "8px 12px", borderRadius: 10, fontSize: 12, fontWeight: 500,
+                              cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
+                              border: on ? "1px solid rgba(124, 92, 252, 0.3)" : "1px solid var(--color-border-subtle)",
+                              backgroundColor: on ? "var(--color-primary-ghost)" : "var(--color-surface-hover)",
+                              color: on ? "var(--color-primary)" : "var(--color-fg-secondary)",
+                            }}
+                          >
+                            {m.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 ))}
+              </>
+            )}
+
+            {tab === "prompts" && (
+              <>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {TARGETS.map((t) => {
+                    const on = promptTarget === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => setPromptTarget(t.id)}
+                        style={{
+                          flex: 1, padding: "9px 12px", borderRadius: 10, fontSize: 12, fontWeight: 550,
+                          cursor: "pointer", fontFamily: "inherit",
+                          border: on ? "1px solid rgba(124, 92, 252, 0.3)" : "1px solid var(--color-border-subtle)",
+                          backgroundColor: on ? "var(--color-primary-ghost)" : "var(--color-surface)",
+                          color: on ? "var(--color-primary)" : "var(--color-fg-secondary)",
+                        }}
+                      >
+                        {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <textarea
+                  value={prompts[promptTarget] ?? ""}
+                  onChange={(e) => setPrompts({ ...prompts, [promptTarget]: e.target.value })}
+                  rows={14}
+                  style={{ ...fieldInput, resize: "none", lineHeight: 1.6, fontSize: 12.5 }}
+                />
+                <p style={{ fontSize: 11, color: "var(--color-fg-muted)", marginTop: -12 }}>
+                  Your clipboard text is sent as the user message. Output should be Markdown — Morph converts it
+                  to rich text on the clipboard.
+                </p>
+              </>
+            )}
+
+            {tab === "general" && (
+              <div>
+                <label style={labelStyle}>Global shortcut</label>
+                <input
+                  value={shortcut}
+                  onChange={(e) => setShortcut(e.target.value)}
+                  style={{ ...fieldInput, fontFamily: "SF Mono, Menlo, monospace" }}
+                />
+                <p style={{ fontSize: 11, color: "var(--color-fg-muted)", marginTop: 8 }}>
+                  Format: CommandOrControl+Shift+M
+                </p>
               </div>
-            </div>
-
-            {/* Global Shortcut */}
-            <div>
-              <label style={labelStyle}>Global Shortcut</label>
-              <input
-                value={shortcut}
-                onChange={(e) => setShortcut(e.target.value)}
-                style={{ ...fieldInput, fontFamily: "SF Mono, Menlo, monospace" }}
-              />
-              <p style={{ fontSize: 11, color: "var(--color-fg-muted)", marginTop: 8 }}>
-                Format: CommandOrControl+Shift+M
-              </p>
-            </div>
-
-            {/* Auto Clipboard */}
-            <div>
-              <label style={labelStyle}>Behavior</label>
-              <button
-                onClick={() => setAutoClipboard(!autoClipboard)}
-                style={{
-                  width: "100%",
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "14px 16px",
-                  backgroundColor: "var(--color-surface)",
-                  border: "1px solid var(--color-border-subtle)",
-                  borderRadius: 12,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: "var(--color-fg)", textAlign: "left" }}>
-                    Auto-paste from clipboard
-                  </div>
-                  <div style={{ fontSize: 11, color: "var(--color-fg-muted)", marginTop: 4, textAlign: "left" }}>
-                    Automatically fill input with clipboard content on shortcut trigger
-                  </div>
-                </div>
-                <div
-                  style={{
-                    width: 40, height: 22, borderRadius: 11, flexShrink: 0, marginLeft: 16,
-                    backgroundColor: autoClipboard ? "var(--color-primary)" : "var(--color-border)",
-                    transition: "background-color 0.15s",
-                    position: "relative",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 18, height: 18, borderRadius: 9,
-                      backgroundColor: "white",
-                      position: "absolute", top: 2,
-                      left: autoClipboard ? 20 : 2,
-                      transition: "left 0.15s",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-                    }}
-                  />
-                </div>
-              </button>
-            </div>
+            )}
 
             {error && (
               <div style={{
@@ -247,8 +316,8 @@ export function SettingsDialog() {
         </div>
 
         {/* Footer */}
-        <div style={{ height: 1, backgroundColor: "var(--color-border-subtle)", margin: "0 28px" }} />
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, padding: "20px 28px" }}>
+        <div style={{ height: 1, backgroundColor: "var(--color-border-subtle)" }} />
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, padding: "18px 28px" }}>
           <button
             onClick={() => setSettingsOpen(false)}
             style={{

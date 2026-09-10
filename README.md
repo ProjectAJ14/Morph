@@ -2,7 +2,7 @@
 
 # Morph
 
-**Rewrite anything, instantly.**
+**Copy. Click. Paste.**
 
 [![Download](https://img.shields.io/badge/Download-Landing_Page-blue?style=for-the-badge&logo=github)](https://projectaj14.github.io/Morph/)
 [![Release](https://img.shields.io/github/v/release/ProjectAJ14/Morph?style=for-the-badge&logo=electron&label=Latest)](https://github.com/ProjectAJ14/Morph/releases/latest)
@@ -10,9 +10,9 @@
 
 <br />
 
-*AI-powered text rewriter that lives in your menu bar. One global shortcut to transform any text on your clipboard. Powered by [Groq](https://groq.com) for lightning-fast results.*
+*Turns a rough message into a properly formatted Slack or Teams message. Copy your text, press one shortcut, pick where it's going — the formatted version is already on your clipboard.*
 
-**Shortcut → Clipboard → Rewrite → Copy. Done.**
+**Copy → Shortcut → Slack / Teams / Generic → Paste. Done.**
 
 [Download the App](https://projectaj14.github.io/Morph/) · [View Releases](https://github.com/ProjectAJ14/Morph/releases) · [Report Issue](https://github.com/ProjectAJ14/Morph/issues)
 
@@ -25,16 +25,29 @@
 ## How It Works
 
 ```
-   Trigger          Read Clipboard       AI Rewrite          Copy
+    Copy            Trigger          Pick a target        Paste
   ─────────── ──▶ ─────────────── ──▶ ─────────────── ──▶ ───────────────
-  Press global      Morph reads your     Groq rewrites       One click to
-  shortcut from     clipboard content    with your custom     copy the result
-  any app           automatically        system prompt        back to clipboard
+  Copy your        Press the global    Slack, Teams or     Your clipboard
+  rough message    shortcut            Generic — one       already holds the
+  (⌘C)                                 click               formatted version
 ```
 
-1. **Trigger** — Press `⌘+Shift+M` from anywhere on your system
-2. **Rewrite** — Morph reads your clipboard, sends it to Groq with your custom system prompt
-3. **Copy** — One click copies the rewritten text back to your clipboard
+1. **Copy** — Copy the message you scribbled, however messy
+2. **Trigger** — Press `⌘+Shift+M` from anywhere
+3. **Pick a target** — Slack, Teams, or Generic Markdown. Morph reformats and replaces your
+   clipboard, then hides itself
+4. **Paste** — `⌘V` into the chat box. Bold, lists, code blocks and tables land as real formatting
+
+### Why three buttons?
+
+Neither Slack nor Teams parses Markdown on paste, and they don't support the same things. Morph
+writes the clipboard differently for each:
+
+| | Teams | Slack | Generic |
+|:--|:--|:--|:--|
+| Tables | real tables | not supported → aligned code block | real tables |
+| Headings | not supported → bold line | not supported → bold line | real headings |
+| Plain-text fallback | standard Markdown | mrkdwn (`*bold*`) | standard Markdown |
 
 ---
 
@@ -42,33 +55,34 @@
 
 Download and install Morph from the [landing page](https://projectaj14.github.io/Morph/) or [releases](https://github.com/ProjectAJ14/Morph/releases/latest), then follow the steps below.
 
-### Step 1 — Get a Groq API Key
+### Step 1 — Get an API Key
 
-1. Go to [console.groq.com](https://console.groq.com/) and create an account
-2. Navigate to **API Keys** and create a new key (starts with `gsk_...`)
-3. Copy the API key
+Morph works with either provider — pick one:
+
+- **Anthropic** (default) — [console.anthropic.com](https://console.anthropic.com/) → API Keys → new key (`sk-ant-...`)
+- **Groq** — [console.groq.com](https://console.groq.com/) → API Keys → new key (`gsk_...`)
 
 ### Step 2 — Configure Morph
 
 1. Open Morph
 2. Click the **gear icon** (⚙️) to open Settings
-3. Paste your Groq API key
-4. (Optional) Customize your **System Prompt** — this controls how text is rewritten
-5. (Optional) Change the **Model** (default: Llama 3.3 70B)
-6. (Optional) Change the **Global Shortcut** (default: `⌘+Shift+M`)
-7. Click **Save Changes**
+3. On the **Providers** tab, paste your key and pick a model. The provider marked active is the one
+   used for formatting — switch it any time; both keys are kept
+4. (Optional) On the **Prompts** tab, tune the Slack / Teams / Generic prompts
+5. (Optional) On the **General** tab, change the **Global Shortcut** (default: `⌘+Shift+M`)
+6. Click **Save Changes**
 
 ---
 
 ## Daily Usage
 
-1. **Copy** any text to your clipboard (⌘+C)
-2. **Press** `⌘+Shift+M` — Morph appears with your text
-3. **Click** Rewrite (or press `⌘+Enter`)
-4. **Click** Copy to grab the result
-5. **Paste** wherever you need it (⌘+V)
+1. **Copy** your rough message (⌘+C)
+2. **Press** `⌘+Shift+M` — Morph appears
+3. **Click** Slack, Teams, or Generic
+4. **Paste** into the chat box (⌘+V)
 
-> Morph automatically hides when you press the shortcut again, or you can close it normally.
+> Morph hides itself as soon as the clipboard is replaced. Press the shortcut again to bring it back.
+> Past formats live under the clock icon — clicking one puts it back on your clipboard.
 
 ---
 
@@ -76,14 +90,14 @@ Download and install Morph from the [landing page](https://projectaj14.github.io
 
 | Feature | Description |
 |:--------|:------------|
+| **Three targets** | Slack, Teams, and Generic Markdown — each formatted for what that app actually renders |
+| **Clipboard in, clipboard out** | No text box. Copy, click, paste |
+| **Rich paste** | Writes `text/html` and `text/plain`, so bold, lists, code blocks and tables survive the paste |
 | **Global Shortcut** | Trigger from any app without switching windows (`⌘+Shift+M`) |
-| **Clipboard Auto-Read** | Automatically reads clipboard content when activated |
-| **Streaming Responses** | Text streams in as the AI writes — no waiting for the full response |
-| **Custom System Prompt** | Set your own instructions for how text should be rewritten |
-| **Multiple Models** | Choose from Llama 3.3 70B, Llama 3.1 8B, Mixtral 8x7B, Gemma 2 9B |
-| **Local History** | Every rewrite is saved in a local SQLite database |
-| **One-Click Copy** | Copy the rewritten text back to clipboard instantly |
-| **Fully Local** | No accounts, no cloud storage — your API key and history stay on your machine |
+| **Swappable providers** | Anthropic or Groq, each with its own key and model. Switch in Settings |
+| **Editable prompts** | Per-target prompts you can tune to your own voice |
+| **Local History** | Every format is saved locally in SQLite; click one to re-copy it |
+| **Fully Local** | No accounts, no cloud storage — your keys and history stay on your machine |
 
 ---
 
@@ -109,6 +123,7 @@ npm run electron:dev     # Start Electron + Vite in dev mode
 npm run dev              # Vite dev server only
 npm run build            # Production build (renderer)
 npm run electron:compile # Compile Electron TypeScript
+npm run check            # Compile + run the mrkdwn self-check
 npm run electron:dev     # Dev mode (Vite + Electron)
 npm run electron:build   # Production build + package
 ```
@@ -116,23 +131,29 @@ npm run electron:build   # Production build + package
 ### Architecture
 
 ```
-electron/          Main process (Node.js)
-├── main.ts        Window management, IPC, global shortcut, single-instance lock
-├── preload.ts     Secure contextBridge IPC exposure
-├── config.ts      JSON config persistence in userData
-├── database.ts    SQLite setup and CRUD (better-sqlite3)
-└── groq.ts        Groq API streaming calls (API key stays in main process)
+electron/               Main process (Node.js)
+├── main.ts             Window management, IPC, global shortcut, single-instance lock
+├── preload.ts          Secure contextBridge IPC exposure
+├── config.ts           JSON config persistence, default prompts, v1→v2 migration
+├── providers.ts        Anthropic + Groq adapters (API keys stay in main process)
+├── clipboard-format.ts Writes both clipboard flavors per target
+├── mrkdwn.ts           Markdown → Slack mrkdwn, with an assert self-check
+└── database.ts         SQLite setup and CRUD (better-sqlite3)
 
-src/               Renderer (React)
-├── App.tsx        Root component, IPC listeners
-├── components/    RewriteView, SettingsDialog, HistoryPanel
-├── stores/        Zustand state management
-└── types/         TypeScript declarations
+src/                    Renderer (React)
+├── App.tsx             Root component
+├── components/         FormatView, SettingsDialog, HistoryPanel, Sidebar
+├── stores/             Zustand state management
+└── types/              TypeScript declarations
 ```
 
 ### Key Design Decisions
 
-- **API key in main process** — Never exposed to the renderer (browser context)
+- **API keys in main process** — The renderer only ever receives a masked key (`••••1a2b`)
+- **Two clipboard flavors** — `text/html` is what Slack and Teams read on ⌘V, and the only route to
+  real tables in Teams; `text/plain` is the ⌘⇧V fallback
+- **Platform quirks live in the prompts** — Slack's "no tables, no headings" is a prompt rule, not a
+  post-processing step
 - **No embedded HTTP server** — Vite produces static files loaded via `file://` in production
 - **better-sqlite3** — Synchronous, fast, runs in main process, results passed via IPC
 - **Single instance lock** — Prevents duplicate app windows
@@ -164,8 +185,8 @@ The landing page (`docs/index.html`) is auto-deployed to GitHub Pages on pushes 
 
 <div align="center">
 
-Built with Electron, React, and Groq.
+Built with Electron, React, and Claude.
 
-*Rewrite anything, instantly.*
+*Copy. Click. Paste.*
 
 </div>

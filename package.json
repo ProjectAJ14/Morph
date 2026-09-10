@@ -2,7 +2,7 @@
   "name": "morph",
   "version": "0.2.1",
   "productName": "Morph",
-  "description": "AI-powered text rewriter — keyboard shortcut, clipboard in, rewritten text out",
+  "description": "Formats your clipboard for Slack, Teams, or plain Markdown \u2014 copy, click, paste",
   "private": true,
   "main": "dist-electron/main.js",
   "scripts": {
@@ -11,14 +11,18 @@
     "electron:compile": "tsc -p electron/tsconfig.json",
     "electron:dev": "npm run electron:compile && node electron/dev-start.js",
     "electron:build": "npm run build && npm run electron:compile && electron-builder",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "check": "npm run electron:compile && node dist-electron/mrkdwn.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.124.0",
+    "@types/markdown-it": "^14.2.0",
     "better-sqlite3": "^11.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "groq-sdk": "^0.9.0",
     "lucide-react": "^0.563.0",
+    "markdown-it": "^15.0.1",
     "radix-ui": "^1.4.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
