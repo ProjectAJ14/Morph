@@ -70,17 +70,16 @@ Group the commits into these categories (omit empty categories):
 - Update the `version` field in `package.json` to the new version.
 - Also update `package-lock.json` — run `npm install --package-lock-only` to sync it.
 
-### Step 6: Commit, Tag, and Push
+### Step 6: Commit and Push
 - Stage the changed files: `git add CHANGELOG.md package.json package-lock.json`
 - Commit with message: `chore(release): vX.Y.Z`
-- Create an annotated git tag: `git tag -a vX.Y.Z -m "Release vX.Y.Z"`
-- Push the commit: `git push`
-- Push the tag: `git push origin vX.Y.Z`
+- Push the commit to `main`: `git push`
+- **Do NOT create or push a git tag.** CI creates `vX.Y.Z` from `package.json` when the commit lands on `main`. A pre-existing tag makes the pipeline skip the release.
 
 ### Step 7: Monitor Release Pipeline
-After pushing the tag, the GitHub Actions release workflow (`.github/workflows/release.yml`) will be triggered automatically. Monitor it to completion:
+After pushing to `main`, the GitHub Actions release workflow (`.github/workflows/release.yml`) will be triggered automatically. Monitor it to completion:
 
-1. **Find the workflow run:** Use `gh run list --workflow=release.yml --limit=1` to get the latest run triggered by the tag push.
+1. **Find the workflow run:** Use `gh run list --workflow=release.yml --limit=1` to get the latest run triggered by the push.
 2. **Watch the run:** Poll with `gh run view <run-id>` every 30-60 seconds. The workflow builds on macOS (arm64+x64) and Windows (x64), so expect it to take several minutes.
 3. **On success:** Inform the user that the release pipeline completed successfully. Include:
    - Link to the GitHub Release page
@@ -98,7 +97,7 @@ After completing all steps, provide a clear summary:
 - Previous version → New version
 - Number of commits included
 - Categories of changes
-- Tag name created
+- Tag name CI will create
 - Confirm push status
 - Release pipeline status (success/failure/in-progress)
 - Link to the GitHub Release (if pipeline succeeded)
@@ -118,4 +117,4 @@ After completing all steps, provide a clear summary:
 7. **Keep the changelog professional.** Entries should be clear and developer-friendly.
 8. **Strict Semantic Versioning enforcement.** Every version must be MAJOR.MINOR.PATCH. The `v` prefix is only for git tags, not for `package.json`.
 9. **CHANGELOG.md and package.json must always stay in sync.**
-10. **Use `gh` CLI for GitHub Actions monitoring.** The release pipeline triggers on `v*.*.*` tags. Always monitor it after pushing a tag.
+10. **Use `gh` CLI for GitHub Actions monitoring.** The release pipeline triggers on pushes to `main` and releases only when `package.json`'s version has no matching tag yet. Always monitor it after pushing.

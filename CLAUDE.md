@@ -38,4 +38,6 @@ block). Teams supports tables but not headings.
 - `npm run electron:build` — Full production build
 
 ## Release
-- Tag `v*.*.*` → GitHub Actions builds macOS (arm64+x64) + Windows (x64) → GitHub Release
+- Push to `main` → GitHub Actions reads `package.json` version; if `v<version>` isn't already a tag,
+  it builds macOS (arm64+x64) + Windows (x64) and cuts the tag + GitHub Release. Same version = no-op.
+- So releasing = bump the version (`npm version patch`) and land it on `main`.
