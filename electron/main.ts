@@ -9,7 +9,7 @@ import {
   shell,
 } from "electron";
 import * as path from "path";
-import { readConfig, writeConfig, saveWindowBounds, MorphConfig, Target } from "./config";
+import { readConfig, writeConfig, saveWindowBounds, DEFAULT_PROMPTS, MorphConfig, Target } from "./config";
 import { getDb, insertRewrite, getHistory, deleteRewrite, clearHistory, closeDb } from "./database";
 import { complete, PROVIDER_MODELS, PROVIDER_LABELS } from "./providers";
 import { writeFormatted } from "./clipboard-format";
@@ -222,6 +222,7 @@ function setupIpcHandlers(): void {
           { model: p.model, apiKey: maskKey(p.apiKey), apiKeySet: !!p.apiKey },
         ])
       ),
+      defaultPrompts: DEFAULT_PROMPTS,
       providerModels: PROVIDER_MODELS,
       providerLabels: PROVIDER_LABELS,
     };

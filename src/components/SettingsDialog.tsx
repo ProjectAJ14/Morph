@@ -66,6 +66,8 @@ export function SettingsDialog() {
 
   if (!settingsOpen || !config) return null;
 
+  const isDefaultPrompt = prompts[promptTarget] === config.defaultPrompts[promptTarget];
+
   const handleSave = async () => {
     setSaving(true);
     setError(null);
@@ -279,7 +281,19 @@ export function SettingsDialog() {
                   rows={14}
                   style={{ ...fieldInput, resize: "none", lineHeight: 1.6, fontSize: 12.5 }}
                 />
-                <p style={{ fontSize: 11, color: "var(--color-fg-muted)", marginTop: -12 }}>
+                <button
+                  onClick={() => setPrompts({ ...prompts, [promptTarget]: config.defaultPrompts[promptTarget] })}
+                  disabled={isDefaultPrompt}
+                  style={{
+                    alignSelf: "flex-start", marginTop: -12, padding: "6px 10px", borderRadius: 8, fontSize: 11,
+                    fontFamily: "inherit", border: "1px solid var(--color-border-subtle)",
+                    backgroundColor: "var(--color-surface)", color: "var(--color-fg-secondary)",
+                    cursor: isDefaultPrompt ? "default" : "pointer", opacity: isDefaultPrompt ? 0.45 : 1,
+                  }}
+                >
+                  Reset to default
+                </button>
+                <p style={{ fontSize: 11, color: "var(--color-fg-muted)", marginTop: 0 }}>
                   Your clipboard text is sent as the user message. Output should be Markdown — Morph converts it
                   to rich text on the clipboard.
                 </p>

@@ -24,13 +24,25 @@ export interface MorphConfig {
   };
 }
 
-// Shared tone rules — the part the user cares most about.
+// Shared tone rules. Ported from the "signs of AI writing" checklist
+// (github.com/blader/humanizer) - the point is output nobody clocks as a bot.
 const TONE = `Rules:
-- Use simple, natural English. Keep the meaning exactly the same.
-- Keep it short and clear. Restructure if that makes it clearer.
-- Do not add details, opinions, or greetings that were not in the original.
-- Do not make it sound AI-generated or overly polished. It should read like a normal person wrote it.
-- Output ONLY the rewritten message. No preamble, no explanation, no code fences around the whole reply.`;
+- Keep the meaning exactly the same. Do not add facts, opinions, greetings or sign-offs that were not in the original.
+- Plain, direct English. Say the thing instead of staging it. Shorten and restructure freely.
+- Never write "not just X, but Y", "it's not X, it's Y", or any variant. State the point once.
+- No closing flourish. End on the last real fact, not a summary line or a punchy fragment.
+- No throat-clearing. The first sentence carries content, never "Here's a quick update on...".
+- Do not force groups of three. Use exactly as many items as the content has.
+- Do not use em dashes or en dashes as a general connector. Use a comma, a colon, a period, or brackets.
+- Straight quotes and apostrophes only. No curly quotes, no ellipsis character.
+- Banned words: delve, leverage, robust, seamless, elevate, testament, landscape, realm, showcase, unlock, empower, crucial, pivotal, foster, underscore, holistic, cutting-edge, transformative, game-changer. Prefer "use" over "utilize", "make sure" over "ensure", "about" over "regarding".
+- No inflated significance ("this marks a major step", "highlights the importance of") and no sales language.
+- One qualifier at most, and only if the original hedged. Drop "may potentially", "could possibly help to".
+- Use is/are/has directly. Not "serves as", "acts as", "plays a key role in".
+- Active voice with the real actor named, whenever the original names one.
+- Bold is for labels that earn it, not decoration. No emoji unless the original had them.
+- Contractions are fine. It should read like a competent colleague typed it quickly, not like a press release.
+- Output ONLY the rewritten message. No preamble, no explanation, no code fence around the whole reply.`;
 
 export const DEFAULT_PROMPTS: Record<Target, string> = {
   slack: `Rewrite the user's message as a Slack message, formatted in Markdown.
@@ -49,7 +61,7 @@ Slack formatting constraints:
 ${TONE}
 
 Teams formatting constraints:
-- Teams supports real tables — use a Markdown table when the content is genuinely tabular.
+- Teams supports real tables: use a Markdown table when the content is genuinely tabular.
 - Teams has no headings in chat. Use a short **bold** line instead of a # heading.
 - Use - for bullets, 1. for numbered steps, **bold** for emphasis and labels.
 - Use \`inline code\` for identifiers/paths and fenced code blocks for code.
@@ -122,7 +134,11 @@ export function readConfig(): MorphConfig {
 }
 
 export function writeConfig(config: MorphConfig): void {
-  fs.writeFileSync(getConfigPath(), JSON.stringify(config, null, 2), "utf-8");
+  // Persist only prompts the user actually changed, so later default updates still reach them.
+  const prompts = Object.fromEntries(
+    Object.entries(config.prompts).filter(([target, text]) => text !== DEFAULT_PROMPTS[target as Target])
+  );
+  fs.writeFileSync(getConfigPath(), JSON.stringify({ ...config, prompts }, null, 2), "utf-8");
 }
 
 export function saveWindowBounds(bounds: { x: number; y: number; width: number; height: number }): void {

@@ -25,6 +25,7 @@ export interface MorphConfig {
   providerModels: Record<ProviderId, { id: string; label: string }[]>;
   providerLabels: Record<ProviderId, string>;
   prompts: Record<Target, string>;
+  defaultPrompts: Record<Target, string>;
   globalShortcut: string;
   window: { width: number; height: number; x?: number; y?: number };
 }
