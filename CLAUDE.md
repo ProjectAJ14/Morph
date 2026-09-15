@@ -38,6 +38,9 @@ block). Teams supports tables but not headings.
 - `npm run electron:build` — Full production build
 
 ## Release
-- Push to `main` → GitHub Actions reads `package.json` version; if `v<version>` isn't already a tag,
-  it builds macOS (arm64+x64) + Windows (x64) and cuts the tag + GitHub Release. Same version = no-op.
-- So releasing = bump the version (`npm version patch`) and land it on `main`.
+- Every push to `main` releases. The workflow reads the conventional-commit subjects since the
+  last tag, bumps semver (`feat:` → minor, `!:`/`BREAKING CHANGE:` → major, anything else → patch),
+  stamps that version into the build, and cuts the tag + GitHub Release. No manual version bump.
+- `package.json`'s version is a dev placeholder only — git tags are the source of truth. CI stamps
+  the real version at build time and never commits it back.
+- Pull requests run `npm run check` + `npm run build` only. No installers, no tag.
