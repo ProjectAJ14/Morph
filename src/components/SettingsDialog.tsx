@@ -331,7 +331,9 @@ export function SettingsDialog() {
 
         {/* Footer */}
         <div style={{ height: 1, backgroundColor: "var(--color-border-subtle)" }} />
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, padding: "18px 28px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "18px 28px" }}>
+          <span style={{ fontSize: 11, color: "var(--color-fg-muted)" }}>Version {__APP_VERSION__}</span>
+          <div style={{ display: "flex", gap: 12 }}>
           <button
             onClick={() => setSettingsOpen(false)}
             style={{
@@ -357,6 +359,7 @@ export function SettingsDialog() {
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>
+          </div>
         </div>
       </div>
     </div>
