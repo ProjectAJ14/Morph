@@ -177,6 +177,22 @@ async function createWindow(): Promise<void> {
   }
 }
 
+// Deep links the desktop clients register — opening one launches or focuses the app.
+// Generic has no app to bring up.
+const TARGET_URLS: Partial<Record<Target, string>> = {
+  slack: "slack://open",
+  teams: "msteams://",
+};
+
+/** Bring the target chat app to the front so the formatted text can go straight in. */
+function activateTarget(target: Target): void {
+  const url = TARGET_URLS[target];
+  if (!url) return;
+  shell.openExternal(url).catch((err) =>
+    console.warn(`[Morph] Could not open ${target}:`, err)
+  );
+}
+
 function maskKey(key: string): string {
   return key ? "\u2022\u2022\u2022\u2022" + key.slice(-4) : "";
 }
@@ -193,6 +209,7 @@ function setupIpcHandlers(): void {
     const output = await complete(config, systemPrompt, input);
     writeFormatted(output, target);
     insertRewrite(input, output, systemPrompt, config.providers[config.activeProvider].model, target);
+    activateTarget(target);
     return output;
   });
 
