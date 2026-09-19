@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAppStore } from "../stores/app-store";
 import { X, Trash2, Clock, Check } from "lucide-react";
-import type { Target } from "../types/morph";
+import type { RewriteRecord, Target } from "../types/morph";
 
 export function HistoryPanel() {
   const { historyOpen, setHistoryOpen, history, loadHistory } = useAppStore();
@@ -10,7 +10,7 @@ export function HistoryPanel() {
   if (!historyOpen) return null;
 
   // Panel stays open — the check mark is the only signal that the clipboard changed.
-  const handleSelect = async (item: (typeof history)[0]) => {
+  const handleSelect = async (item: RewriteRecord) => {
     await window.morph.writeClipboardFormatted(item.output_text, (item.target as Target) || "generic");
     setCopiedId(item.id);
   };
@@ -26,105 +26,46 @@ export function HistoryPanel() {
     loadHistory();
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr + "Z");
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 1) return "just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString();
-  };
-
   return (
     <div
+      className="scrim scrim--right"
       onClick={(e) => e.target === e.currentTarget && setHistoryOpen(false)}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 50,
-        backgroundColor: "rgba(0,0,0,0.5)",
-        backdropFilter: "blur(4px)",
-        display: "flex",
-        alignItems: "stretch",
-        justifyContent: "flex-end",
-        WebkitAppRegion: "no-drag",
-      }}
     >
-      <div
-        style={{
-          backgroundColor: "var(--color-bg)",
-          borderLeft: "1px solid var(--color-border)",
-          width: 340,
-          display: "flex",
-          flexDirection: "column",
-          boxShadow: "-8px 0 32px rgba(0,0,0,0.3)",
-        }}
-      >
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", height: 56, flexShrink: 0 }}>
-          <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--color-fg)" }}>History</h2>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div className="drawer">
+        <div className="overlay-head">
+          <h2 className="h2">History</h2>
+          <div className="overlay-actions">
             {history.length > 0 && (
-              <button
-                onClick={handleClearAll}
-                style={{
-                  fontSize: 11, fontWeight: 500, padding: "5px 12px",
-                  borderRadius: 99, border: "none",
-                  backgroundColor: "transparent", color: "var(--color-danger)",
-                  cursor: "pointer", fontFamily: "inherit",
-                }}
-              >
+              <button className="link-btn link-btn--danger" onClick={handleClearAll}>
                 Clear all
               </button>
             )}
-            <button
-              onClick={() => setHistoryOpen(false)}
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                width: 32, height: 32, borderRadius: 8,
-                border: "none", backgroundColor: "transparent",
-                color: "var(--color-fg-muted)", cursor: "pointer",
-              }}
-            >
-              <X size={16} />
+            <button className="icon-btn" onClick={() => setHistoryOpen(false)} aria-label="Close">
+              <X size={15} strokeWidth={1.8} />
             </button>
           </div>
         </div>
 
-        <div style={{ height: 1, backgroundColor: "var(--color-border-subtle)" }} />
+        <div className="rule" />
 
-        {/* List */}
-        <div style={{ flex: 1, overflowY: "auto" }}>
+        <div className="history-list">
           {history.length === 0 ? (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 200, gap: 12 }}>
-              <div style={{
-                width: 48, height: 48, borderRadius: 16,
-                backgroundColor: "var(--color-surface)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <Clock size={20} style={{ color: "var(--color-fg-muted)" }} />
-              </div>
-              <span style={{ fontSize: 13, color: "var(--color-fg-muted)" }}>Nothing formatted yet</span>
+            <div className="empty">
+              <span className="empty__mark">
+                <Clock size={18} strokeWidth={1.8} />
+              </span>
+              <span className="hint">Nothing formatted yet</span>
             </div>
           ) : (
-            <div style={{ padding: "8px 0" }}>
-              {history.map((item) => (
-                <HistoryItem
-                  key={item.id}
-                  item={item}
-                  copied={copiedId === item.id}
-                  onSelect={handleSelect}
-                  onDelete={handleDelete}
-                  formatDate={formatDate}
-                />
-              ))}
-            </div>
+            history.map((item) => (
+              <HistoryItem
+                key={item.id}
+                item={item}
+                copied={copiedId === item.id}
+                onSelect={handleSelect}
+                onDelete={handleDelete}
+              />
+            ))
           )}
         </div>
       </div>
@@ -132,76 +73,56 @@ export function HistoryPanel() {
   );
 }
 
+function formatDate(dateStr: string) {
+  const date = new Date(dateStr + "Z");
+  const diffMins = Math.floor((Date.now() - date.getTime()) / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMins < 1) return "just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString();
+}
+
 function HistoryItem({
   item,
   copied,
   onSelect,
   onDelete,
-  formatDate,
 }: {
-  item: any;
+  item: RewriteRecord;
   copied: boolean;
-  onSelect: (item: any) => void;
+  onSelect: (item: RewriteRecord) => void;
   onDelete: (e: React.MouseEvent, id: number) => void;
-  formatDate: (date: string) => string;
 }) {
-  const [hovered, setHovered] = useState(false);
-
+  // Two sibling buttons, not one nested in the other: nesting is invalid and
+  // the only way out of it is a div that the keyboard cannot reach.
   return (
-    <button
-      onClick={() => onSelect(item)}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        width: "100%",
-        textAlign: "left",
-        padding: "14px 24px",
-        border: "none",
-        backgroundColor: hovered ? "var(--color-surface)" : "transparent",
-        cursor: "pointer",
-        transition: "background-color 0.15s",
-        fontFamily: "inherit",
-        display: "block",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-        <p style={{
-          fontSize: 13,
-          lineHeight: 1.5,
-          color: hovered ? "var(--color-fg)" : "var(--color-fg-secondary)",
-          transition: "color 0.15s",
-          overflow: "hidden",
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
-          flex: 1,
-        }}>
-          {item.input_text.slice(0, 140)}{item.input_text.length > 140 ? "..." : ""}
-        </p>
-        {hovered && (
-          <button
-            onClick={(e) => onDelete(e, item.id)}
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "center",
-              width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-              border: "none", backgroundColor: "transparent",
-              color: "var(--color-fg-muted)", cursor: "pointer",
-            }}
-          >
-            <Trash2 size={13} />
-          </button>
-        )}
-      </div>
-      <p style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "var(--color-fg-muted)", marginTop: 6, fontWeight: 500 }}>
-        <span style={{ textTransform: "capitalize" }}>{item.target || "generic"}</span>
-        <span>·</span>
-        <span>{formatDate(item.created_at)}</span>
-        {copied && (
-          <span style={{ display: "flex", alignItems: "center", gap: 4, color: "var(--color-success)" }}>
-            <Check size={11} /> copied
-          </span>
-        )}
-      </p>
-    </button>
+    <div className="history-item">
+      <button className="history-item__open" onClick={() => onSelect(item)}>
+        <span className="history-item__text">
+          {item.input_text.slice(0, 140)}
+          {item.input_text.length > 140 ? "…" : ""}
+        </span>
+        <span className="history-item__meta">
+          <span className="eyebrow">{item.target || "generic"}</span>
+          <span className="eyebrow">{formatDate(item.created_at)}</span>
+          {copied && (
+            <span className="eyebrow copied">
+              <Check size={10} strokeWidth={2.4} /> copied
+            </span>
+          )}
+        </span>
+      </button>
+      <button
+        className="history-item__del"
+        aria-label="Delete this entry"
+        onClick={(e) => onDelete(e, item.id)}
+      >
+        <Trash2 size={13} strokeWidth={1.8} />
+      </button>
+    </div>
   );
 }

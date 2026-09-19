@@ -12,25 +12,23 @@
     "electron:dev": "npm run electron:compile && node electron/dev-start.js",
     "electron:build": "npm run build && npm run electron:compile && electron-builder",
     "postinstall": "electron-builder install-app-deps",
-    "check": "npm run electron:compile && node dist-electron/mrkdwn.js && node dist-electron/clipboard-format.js"
+    "check": "node scripts/check-tokens.mjs && npm run electron:compile && node dist-electron/mrkdwn.js && node dist-electron/clipboard-format.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.124.0",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@fontsource/archivo": "^5.3.0",
     "@types/markdown-it": "^14.2.0",
     "better-sqlite3": "^11.0.0",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
     "groq-sdk": "^0.9.0",
     "lucide-react": "^0.563.0",
     "markdown-it": "^15.0.1",
-    "radix-ui": "^1.4.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "tailwind-merge": "^3.4.0",
     "zustand": "^5.0.11"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4",
     "@types/better-sqlite3": "^7.6.11",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -38,7 +36,6 @@
     "concurrently": "^9.0.0",
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0",
-    "tailwindcss": "^4",
     "typescript": "^5.9.3",
     "wait-on": "^8.0.0"
   }

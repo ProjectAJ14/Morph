@@ -1,10 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-mode="ink">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Morph</title>
     <link rel="icon" type="image/png" href="/icon.png" />
+    <script>
+      // Resolve the ground before the stylesheet paints, so a paper user never
+      // sees a frame of ink. src/lib/ground.ts owns it from here.
+      try {
+        if (localStorage.getItem("morph-ground") === "paper")
+          document.documentElement.setAttribute("data-mode", "paper");
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

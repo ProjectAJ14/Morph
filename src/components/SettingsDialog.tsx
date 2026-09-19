@@ -1,6 +1,7 @@
+import { useState, useEffect } from "react";
 import { useAppStore } from "../stores/app-store";
 import { X, Check } from "lucide-react";
-import { useState, useEffect } from "react";
+import { applyGround, readGround, type Ground } from "../lib/ground";
 import type { ProviderId, Target } from "../types/morph";
 
 const PROVIDER_IDS: ProviderId[] = ["anthropic", "groq"];
@@ -16,30 +17,18 @@ const TARGETS: { id: Target; label: string }[] = [
   { id: "generic", label: "Generic" },
 ];
 
-type Tab = "providers" | "prompts" | "general";
+const GROUNDS: { id: Ground; label: string; hint: string }[] = [
+  { id: "ink", label: "Ink", hint: "warm dark" },
+  { id: "paper", label: "Paper", hint: "warm light" },
+];
 
-const fieldInput: React.CSSProperties = {
-  width: "100%",
-  backgroundColor: "var(--color-surface)",
-  border: "1px solid var(--color-border-subtle)",
-  borderRadius: 12,
-  padding: "12px 16px",
-  fontSize: 13,
-  color: "var(--color-fg)",
-  outline: "none",
-  fontFamily: "inherit",
-  transition: "all 0.15s",
-};
+const TABS = [
+  ["providers", "Providers"],
+  ["prompts", "Prompts"],
+  ["general", "General"],
+] as const;
 
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontSize: 11,
-  fontWeight: 600,
-  color: "var(--color-fg-secondary)",
-  textTransform: "uppercase",
-  letterSpacing: "0.05em",
-  marginBottom: 10,
-};
+type Tab = (typeof TABS)[number][0];
 
 export function SettingsDialog() {
   const { settingsOpen, setSettingsOpen, config, loadConfig } = useAppStore();
@@ -50,6 +39,9 @@ export function SettingsDialog() {
   const [prompts, setPrompts] = useState<Record<string, string>>({});
   const [promptTarget, setPromptTarget] = useState<Target>("slack");
   const [shortcut, setShortcut] = useState("");
+  // The ground applies instantly and persists itself — it is not part of the
+  // config payload, so it never waits on Save.
+  const [ground, setGround] = useState<Ground>(readGround);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,6 +52,7 @@ export function SettingsDialog() {
       setModels(Object.fromEntries(PROVIDER_IDS.map((id) => [id, config.providers[id].model])));
       setPrompts({ ...config.prompts });
       setShortcut(config.globalShortcut);
+      setGround(readGround());
       setError(null);
     }
   }, [settingsOpen, config]);
@@ -67,6 +60,11 @@ export function SettingsDialog() {
   if (!settingsOpen || !config) return null;
 
   const isDefaultPrompt = prompts[promptTarget] === config.defaultPrompts[promptTarget];
+
+  const chooseGround = (next: Ground) => {
+    setGround(next);
+    applyGround(next);
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -92,273 +90,185 @@ export function SettingsDialog() {
 
   return (
     <div
+      className="scrim scrim--center"
       onClick={(e) => e.target === e.currentTarget && setSettingsOpen(false)}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 50,
-        backgroundColor: "rgba(0,0,0,0.55)",
-        backdropFilter: "blur(4px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        WebkitAppRegion: "no-drag",
-      }}
     >
-      <div
-        style={{
-          backgroundColor: "var(--color-bg)",
-          border: "1px solid var(--color-border)",
-          borderRadius: 20,
-          width: 480,
-          maxHeight: "88vh",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          boxShadow: "0 24px 48px rgba(0,0,0,0.4)",
-        }}
-      >
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "22px 28px 16px" }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--color-fg)" }}>Settings</h2>
-          <button
-            onClick={() => setSettingsOpen(false)}
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "center",
-              width: 32, height: 32, borderRadius: 8,
-              border: "none", backgroundColor: "transparent",
-              color: "var(--color-fg-muted)", cursor: "pointer",
-            }}
-          >
-            <X size={16} />
+      <div className="dialog">
+        <div className="overlay-head">
+          <h2 className="h2">Settings</h2>
+          <button className="icon-btn" onClick={() => setSettingsOpen(false)} aria-label="Close">
+            <X size={15} strokeWidth={1.8} />
           </button>
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: "flex", gap: 4, padding: "0 28px 14px" }}>
-          {([["providers", "Providers"], ["prompts", "Prompts"], ["general", "General"]] as const).map(([id, label]) => (
+        <div className="tabs">
+          {TABS.map(([id, label]) => (
             <button
               key={id}
+              className={`tab ${tab === id ? "is-on" : ""}`}
               onClick={() => setTab(id)}
-              style={{
-                padding: "7px 14px",
-                fontSize: 12,
-                fontWeight: 550,
-                borderRadius: 99,
-                border: "none",
-                cursor: "pointer",
-                fontFamily: "inherit",
-                backgroundColor: tab === id ? "var(--color-surface-hover)" : "transparent",
-                color: tab === id ? "var(--color-fg)" : "var(--color-fg-muted)",
-              }}
             >
               {label}
             </button>
           ))}
         </div>
 
-        <div style={{ height: 1, backgroundColor: "var(--color-border-subtle)" }} />
+        <div className="rule" />
 
-        {/* Body */}
-        <div style={{ padding: "22px 28px", overflowY: "auto", flex: 1, minHeight: 0 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-            {tab === "providers" && (
-              <>
-                <div>
-                  <label style={labelStyle}>Active provider</label>
-                  <div style={{ display: "grid", gridTemplateColumns: `repeat(${PROVIDER_IDS.length}, 1fr)`, gap: 10 }}>
-                    {PROVIDER_IDS.map((id) => {
-                      const on = activeProvider === id;
-                      return (
-                        <button
-                          key={id}
-                          onClick={() => setActiveProvider(id)}
-                          style={{
-                            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
-                            padding: "12px 14px", borderRadius: 12, fontSize: 13, fontWeight: 550,
-                            cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
-                            border: on ? "1px solid rgba(124, 92, 252, 0.3)" : "1px solid var(--color-border-subtle)",
-                            backgroundColor: on ? "var(--color-primary-ghost)" : "var(--color-surface)",
-                            color: on ? "var(--color-primary)" : "var(--color-fg-secondary)",
-                          }}
-                        >
-                          {config.providerLabels[id]}
-                          {on && <Check size={14} />}
-                        </button>
-                      );
-                    })}
-                  </div>
+        <div className="overlay-body">
+          {tab === "providers" && (
+            <>
+              <div className="field">
+                <span className="eyebrow">Active provider</span>
+                <div className="choice-row">
+                  {PROVIDER_IDS.map((id) => (
+                    <button
+                      key={id}
+                      className={`choice ${activeProvider === id ? "is-on" : ""}`}
+                      onClick={() => setActiveProvider(id)}
+                    >
+                      {config.providerLabels[id]}
+                      {activeProvider === id && <Check size={13} strokeWidth={2.2} />}
+                    </button>
+                  ))}
                 </div>
+              </div>
 
-                {PROVIDER_IDS.map((id) => (
-                  <div
-                    key={id}
-                    style={{
-                      padding: 16,
-                      borderRadius: 14,
-                      border: "1px solid var(--color-border-subtle)",
-                      backgroundColor: activeProvider === id ? "var(--color-surface)" : "transparent",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 14,
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--color-fg)" }}>
-                        {config.providerLabels[id]}
-                      </span>
-                      {config.providers[id].apiKeySet ? (
-                        <span style={{ fontSize: 11, color: "var(--color-success)" }}>
-                          key saved {config.providers[id].apiKey}
-                        </span>
-                      ) : (
-                        <span style={{ fontSize: 11, color: "var(--color-fg-muted)" }}>no key</span>
-                      )}
-                    </div>
-
-                    <input
-                      type="password"
-                      value={keys[id] ?? ""}
-                      onChange={(e) => setKeys({ ...keys, [id]: e.target.value })}
-                      placeholder={
-                        config.providers[id].apiKeySet
-                          ? "Leave blank to keep current key"
-                          : `${KEY_PLACEHOLDER[id]}  —  from ${KEY_SOURCE[id]}`
-                      }
-                      style={fieldInput}
-                    />
-
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                      {config.providerModels[id].map((m) => {
-                        const on = models[id] === m.id;
-                        return (
-                          <button
-                            key={m.id}
-                            onClick={() => setModels({ ...models, [id]: m.id })}
-                            style={{
-                              padding: "8px 12px", borderRadius: 10, fontSize: 12, fontWeight: 500,
-                              cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
-                              border: on ? "1px solid rgba(124, 92, 252, 0.3)" : "1px solid var(--color-border-subtle)",
-                              backgroundColor: on ? "var(--color-primary-ghost)" : "var(--color-surface-hover)",
-                              color: on ? "var(--color-primary)" : "var(--color-fg-secondary)",
-                            }}
-                          >
-                            {m.label}
-                          </button>
-                        );
-                      })}
-                    </div>
+              {PROVIDER_IDS.map((id) => (
+                <div key={id} className={`card ${activeProvider === id ? "is-active" : ""}`}>
+                  <div className="card__head">
+                    <span className="card__title">{config.providerLabels[id]}</span>
+                    {config.providers[id].apiKeySet ? (
+                      <>
+                        <span className="eyebrow eyebrow--spot">key saved</span>
+                        {/* Not an .eyebrow: uppercasing a masked key misstates
+                            the characters it is actually showing. */}
+                        <span className="hint mono">{config.providers[id].apiKey}</span>
+                      </>
+                    ) : (
+                      <span className="eyebrow">no key</span>
+                    )}
                   </div>
-                ))}
-              </>
-            )}
 
-            {tab === "prompts" && (
-              <>
-                <div style={{ display: "flex", gap: 8 }}>
-                  {TARGETS.map((t) => {
-                    const on = promptTarget === t.id;
-                    return (
+                  <input
+                    className="input"
+                    type="password"
+                    value={keys[id] ?? ""}
+                    onChange={(e) => setKeys({ ...keys, [id]: e.target.value })}
+                    placeholder={
+                      config.providers[id].apiKeySet
+                        ? "Leave blank to keep current key"
+                        : `${KEY_PLACEHOLDER[id]}  —  from ${KEY_SOURCE[id]}`
+                    }
+                  />
+
+                  <div className="choice-wrap">
+                    {config.providerModels[id].map((m) => (
                       <button
-                        key={t.id}
-                        onClick={() => setPromptTarget(t.id)}
-                        style={{
-                          flex: 1, padding: "9px 12px", borderRadius: 10, fontSize: 12, fontWeight: 550,
-                          cursor: "pointer", fontFamily: "inherit",
-                          border: on ? "1px solid rgba(124, 92, 252, 0.3)" : "1px solid var(--color-border-subtle)",
-                          backgroundColor: on ? "var(--color-primary-ghost)" : "var(--color-surface)",
-                          color: on ? "var(--color-primary)" : "var(--color-fg-secondary)",
-                        }}
+                        key={m.id}
+                        className={`choice choice--sm ${models[id] === m.id ? "is-on" : ""}`}
+                        onClick={() => setModels({ ...models, [id]: m.id })}
                       >
-                        {t.label}
+                        {m.label}
                       </button>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
-                <textarea
-                  value={prompts[promptTarget] ?? ""}
-                  onChange={(e) => setPrompts({ ...prompts, [promptTarget]: e.target.value })}
-                  rows={14}
-                  style={{ ...fieldInput, resize: "none", lineHeight: 1.6, fontSize: 12.5 }}
-                />
-                <button
-                  onClick={() => setPrompts({ ...prompts, [promptTarget]: config.defaultPrompts[promptTarget] })}
-                  disabled={isDefaultPrompt}
-                  style={{
-                    alignSelf: "flex-start", marginTop: -12, padding: "6px 10px", borderRadius: 8, fontSize: 11,
-                    fontFamily: "inherit", border: "1px solid var(--color-border-subtle)",
-                    backgroundColor: "var(--color-surface)", color: "var(--color-fg-secondary)",
-                    cursor: isDefaultPrompt ? "default" : "pointer", opacity: isDefaultPrompt ? 0.45 : 1,
-                  }}
-                >
-                  Reset to default
-                </button>
-                <p style={{ fontSize: 11, color: "var(--color-fg-muted)", marginTop: 0 }}>
-                  Your clipboard text is sent as the user message. Output should be Markdown — Morph converts it
-                  to rich text on the clipboard.
-                </p>
-              </>
-            )}
+              ))}
+            </>
+          )}
 
-            {tab === "general" && (
-              <div>
-                <label style={labelStyle}>Global shortcut</label>
+          {tab === "prompts" && (
+            <>
+              <div className="choice-row">
+                {TARGETS.map((t) => (
+                  <button
+                    key={t.id}
+                    className={`choice ${promptTarget === t.id ? "is-on" : ""}`}
+                    onClick={() => setPromptTarget(t.id)}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              <textarea
+                className="textarea"
+                value={prompts[promptTarget] ?? ""}
+                onChange={(e) => setPrompts({ ...prompts, [promptTarget]: e.target.value })}
+                rows={14}
+              />
+
+              <button
+                className="choice choice--sm"
+                style={{ alignSelf: "flex-start" }}
+                disabled={isDefaultPrompt}
+                onClick={() =>
+                  setPrompts({ ...prompts, [promptTarget]: config.defaultPrompts[promptTarget] })
+                }
+              >
+                Reset to default
+              </button>
+
+              <p className="hint">
+                Your clipboard text is sent as the user message. Output should be Markdown — Morph
+                converts it to rich text on the clipboard.
+              </p>
+            </>
+          )}
+
+          {tab === "general" && (
+            <>
+              <div className="field">
+                <span className="eyebrow">Ground</span>
+                <div className="choice-row">
+                  {GROUNDS.map((g) => (
+                    <button
+                      key={g.id}
+                      className={`choice ${ground === g.id ? "is-on" : ""}`}
+                      onClick={() => chooseGround(g.id)}
+                    >
+                      {g.label}
+                      {ground === g.id && <Check size={13} strokeWidth={2.2} />}
+                    </button>
+                  ))}
+                </div>
+                <p className="hint">
+                  {GROUNDS.find((g) => g.id === ground)?.hint} — applies immediately, no save needed.
+                </p>
+              </div>
+
+              <div className="field">
+                <span className="eyebrow">Global shortcut</span>
                 <input
+                  className="input input--mono"
                   value={shortcut}
                   onChange={(e) => setShortcut(e.target.value)}
-                  style={{ ...fieldInput, fontFamily: "SF Mono, Menlo, monospace" }}
                 />
-                <p style={{ fontSize: 11, color: "var(--color-fg-muted)", marginTop: 8 }}>
-                  Format: CommandOrControl+Shift+M
-                </p>
+                <p className="hint">Format: CommandOrControl+Shift+M</p>
               </div>
-            )}
+            </>
+          )}
 
-            {error && (
-              <div style={{
-                padding: "12px 16px",
-                backgroundColor: "var(--color-danger-ghost)",
-                border: "1px solid rgba(240, 68, 56, 0.1)",
-                borderRadius: 12,
-                fontSize: 12,
-                color: "var(--color-danger)",
-              }}>
-                {error}
-              </div>
-            )}
-          </div>
+          {error && (
+            <div className="notice">
+              <span className="notice__icon">!</span>
+              {error}
+            </div>
+          )}
         </div>
 
-        {/* Footer */}
-        <div style={{ height: 1, backgroundColor: "var(--color-border-subtle)" }} />
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "18px 28px" }}>
-          <span style={{ fontSize: 11, color: "var(--color-fg-muted)" }}>Version {__APP_VERSION__}</span>
-          <div style={{ display: "flex", gap: 12 }}>
-          <button
-            onClick={() => setSettingsOpen(false)}
-            style={{
-              padding: "10px 20px", fontSize: 12, fontWeight: 500,
-              borderRadius: 99, border: "1px solid var(--color-border)",
-              backgroundColor: "transparent", color: "var(--color-fg-secondary)",
-              cursor: "pointer", fontFamily: "inherit",
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            style={{
-              padding: "10px 24px", fontSize: 12, fontWeight: 600,
-              borderRadius: 99, border: "none",
-              backgroundColor: "var(--color-primary)", color: "var(--color-primary-fg)",
-              cursor: "pointer", fontFamily: "inherit",
-              opacity: saving ? 0.5 : 1,
-              boxShadow: "0 0 16px rgba(124, 92, 252, 0.2)",
-            }}
-          >
-            {saving ? "Saving..." : "Save Changes"}
-          </button>
+        <div className="rule" />
+
+        <div className="overlay-foot">
+          <span className="eyebrow">v{__APP_VERSION__}</span>
+          <div className="overlay-foot__actions">
+            <button className="btn btn--ghost" onClick={() => setSettingsOpen(false)}>
+              Cancel
+            </button>
+            <button className="btn btn--brand" onClick={handleSave} disabled={saving}>
+              {saving ? "Saving…" : "Save changes"}
+            </button>
           </div>
         </div>
       </div>

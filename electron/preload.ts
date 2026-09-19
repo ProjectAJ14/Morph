@@ -6,6 +6,9 @@ contextBridge.exposeInMainWorld("morph", {
   // Clipboard in -> formatted -> clipboard out
   format: (target: string): Promise<string> => ipcRenderer.invoke("format:run", target),
   hideWindow: (): Promise<void> => ipcRenderer.invoke("window:hide"),
+  /** The native frame can't read CSS — the renderer hands it the resolved --bg. */
+  setWindowBackground: (color: string): Promise<void> =>
+    ipcRenderer.invoke("window:set-background", color),
 
   // Clipboard
   writeClipboardFormatted: (markdown: string, target: string): Promise<void> =>
