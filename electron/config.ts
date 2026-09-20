@@ -33,7 +33,7 @@ const TONE = `Rules:
 - No closing flourish. End on the last real fact, not a summary line or a punchy fragment.
 - No throat-clearing. The first sentence carries content, never "Here's a quick update on...".
 - Do not force groups of three. Use exactly as many items as the content has.
-- Do not use em dashes or en dashes as a general connector. Use a comma, a colon, a period, or brackets.
+- Never use an em dash or an en dash, and never "--". Not as a connector, not for an aside, not anywhere. Use a comma, a colon, a period, or brackets.
 - Straight quotes and apostrophes only. No curly quotes, no ellipsis character.
 - Banned words: delve, leverage, robust, seamless, elevate, testament, landscape, realm, showcase, unlock, empower, crucial, pivotal, foster, underscore, holistic, cutting-edge, transformative, game-changer. Prefer "use" over "utilize", "make sure" over "ensure", "about" over "regarding".
 - No inflated significance ("this marks a major step", "highlights the importance of") and no sales language.
