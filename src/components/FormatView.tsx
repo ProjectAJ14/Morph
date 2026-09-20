@@ -1,5 +1,5 @@
 import { useAppStore } from "../stores/app-store";
-import { Slack, FileText, Loader2, Check, AlertCircle } from "lucide-react";
+import { Slack, FileText, Loader2, Check, AlertCircle, Cpu } from "lucide-react";
 import type { Target } from "../types/morph";
 
 /** Microsoft Teams mark — lucide has no Teams icon. Sized a touch under the
@@ -74,6 +74,17 @@ export function FormatView() {
             })}
           </div>
         </>
+      )}
+
+      {config && (
+        <button
+          className="stamp"
+          onClick={() => setSettingsOpen(true)}
+          title="Change provider in settings"
+        >
+          <Cpu size={12} strokeWidth={1.8} />
+          {config.providerLabels[config.activeProvider]}
+        </button>
       )}
 
       {status.kind === "error" && (
