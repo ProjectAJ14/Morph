@@ -1,123 +1,538 @@
-@import "tailwindcss";
+/* ============================================================
+   Morph — component styles.
 
-@theme {
-  --color-bg: #0c0c0e;
-  --color-surface: #16161a;
-  --color-surface-hover: #1e1e24;
-  --color-elevated: #222228;
-  --color-fg: #ececef;
-  --color-fg-secondary: #a9a9b2;
-  --color-fg-muted: #5c5c66;
-  --color-border: #2a2a30;
-  --color-border-subtle: #1f1f25;
-  --color-primary: #7c5cfc;
-  --color-primary-hover: #6a4ce8;
-  --color-primary-fg: #ffffff;
-  --color-primary-ghost: #7c5cfc1a;
-  --color-danger: #f04438;
-  --color-danger-ghost: #f044381a;
-  --color-success: #17b26a;
-  --color-success-ghost: #17b26a1a;
-}
+   Every colour here names a ROLE from styles/tokens.css (--ink,
+   --dim, --line, --spot). Nothing names a scale step or a raw
+   hex: those pin a component to one ground and break the toggle.
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+   Sizes name a scale step for the same reason — retuning the
+   spacing or the radii should be an edit to tokens.css, not a
+   sweep through here and the components.
+   ============================================================ */
 
-html, body, #root {
-  height: 100%;
-  width: 100%;
-}
+@import "./styles/tokens.css";
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root { height: 100%; width: 100%; }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", sans-serif;
-  background-color: var(--color-bg);
-  color: var(--color-fg);
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--lh-base);
   overflow: hidden;
-  -webkit-font-smoothing: antialiased;
+  /* No `antialiased`: grayscale smoothing thins light-on-dark
+     glyphs, and ink is the default ground. */
 }
 
-/* Drag region — only the titlebar */
-.drag-region {
-  -webkit-app-region: drag;
-}
-.drag-region button,
-.drag-region a {
-  -webkit-app-region: no-drag;
-}
+button, input, textarea { font: inherit; color: inherit; }
+textarea { resize: none; }
+
+::selection { background: var(--spot); color: var(--spot-ink); }
+:focus-visible { outline: none; box-shadow: var(--ring); }
 
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: var(--color-fg-muted); }
+::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: var(--radius-pill); }
+::-webkit-scrollbar-thumb:hover { background: var(--faint-2); }
 
-textarea { resize: none; }
-::selection { background: rgba(124, 92, 252, 0.3); }
+/* Drag region — only the titlebar and the rail */
+.drag-region { -webkit-app-region: drag; }
+.drag-region button, .drag-region a { -webkit-app-region: no-drag; }
 
-@keyframes spin { to { transform: rotate(360deg); } }
-.spin { animation: spin 0.8s linear infinite; }
+/* ------------------------------------------------------------
+   SHARED TYPE
+   Two extremes, no middle. The micro-label is mono, uppercase and
+   wide-tracked; it replaces the pill-shaped eyebrow entirely.
+   ------------------------------------------------------------ */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  line-height: var(--lh-micro);
+  font-weight: var(--weight-regular);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.eyebrow--spot { color: var(--spot); }
 
-/* Format buttons — the pressed one glows in its brand color while working.
-   --glow-rgb is set per button; the status slot has a fixed width so nothing shifts. */
-.fmt-btn {
+.h1 {
+  font-family: var(--font-disp);
+  font-weight: var(--weight-bold);
+  font-size: var(--display-1);
+  line-height: var(--lh-d1);
+  letter-spacing: var(--tracking-display);
+}
+.h2 {
+  font-family: var(--font-disp);
+  font-weight: var(--weight-bold);
+  font-size: var(--display-2);
+  line-height: var(--lh-d2);
+  letter-spacing: var(--tracking-display);
+}
+.sub  { font-size: var(--text-sm); line-height: var(--lh-sm); color: var(--dim); }
+.hint { font-size: var(--text-xs); line-height: var(--lh-xs); color: var(--faint); }
+.mono { font-family: var(--font-mono); }
+
+/* ------------------------------------------------------------
+   SHELL
+   One continuous ground, divided by hairlines and never by a
+   change of background — that is what makes a single ground
+   toggle possible at all.
+   ------------------------------------------------------------ */
+.app  { display: flex; height: 100vh; width: 100vw; background: var(--bg); }
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+.titlebar {
+  height: var(--titlebar);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+.titlebar__label {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: var(--tracking-caps-wide);
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* ---------- the icon rail ---------- */
+.rail {
+  width: var(--rail);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: var(--space-4);
+  gap: var(--space-1);
+  border-right: 1px solid var(--line);
+  background: var(--bg);
+}
+/* clears the macOS traffic lights */
+.rail__logo {
+  width: 28px; height: 28px;
+  margin-top: var(--titlebar); margin-bottom: var(--space-4);
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.rail__logo img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.rail__group { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
+.rail__spacer { flex: 1; }
+/* the "no API key" tell, directly above the settings gear it points at */
+.rail__alert {
+  width: 5px; height: 5px;
+  border-radius: var(--radius-pill);
+  background: var(--error);
+  margin-bottom: var(--space-1);
+}
+
+.icon-btn {
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition: background var(--duration-fast) var(--ease),
+              color      var(--duration-fast) var(--ease),
+              border-color var(--duration-fast) var(--ease);
+}
+.icon-btn:hover { background: var(--panel); color: var(--ink); border-color: var(--line-2); }
+
+/* ------------------------------------------------------------
+   FORMAT VIEW
+   ------------------------------------------------------------ */
+.view {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column; justify-content: center;
+  gap: var(--space-2);
+  padding: 0 var(--gut) var(--gut);
+}
+.view__head { margin-bottom: var(--space-3); }
+.view__head .eyebrow { display: block; margin-bottom: var(--space-2); }
+.view__head .sub { margin-top: var(--space-2); max-width: 46ch; }
+
+.targets { display: flex; flex-direction: column; gap: var(--space-2); }
+
+/* A target is a hairline-ruled row, not a card. Its identity is
+   the mark and the label; colour is reserved for state. */
+.target {
+  display: flex; align-items: center; gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
   position: relative;
   overflow: hidden;
-  transition: background-color 0.15s, opacity 0.15s, transform 0.1s;
+  transition: background var(--duration-fast) var(--ease),
+              border-color var(--duration-fast) var(--ease),
+              opacity var(--duration-fast) var(--ease);
 }
-.fmt-btn:active:not(:disabled) { transform: scale(0.985); }
+.target:hover:not(:disabled) { background: var(--mass); border-color: var(--faint-2); }
+.target:active:not(:disabled) { transform: translateY(1px); }
+.target:disabled { cursor: default; }
+.target.is-idle:disabled { opacity: .38; }
 
+.target__icon {
+  display: flex; flex-shrink: 0;
+  color: var(--dim);
+  transition: color var(--duration-base) var(--ease);
+}
+.target__body  { flex: 1; min-width: 0; }
+.target__label {
+  display: block;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+}
+.target__hint {
+  display: block;
+  margin-top: 1px;
+  font-size: var(--text-xs);
+  line-height: var(--lh-xs);
+  color: var(--faint);
+}
+/* fixed slot, so nothing shifts when the spinner appears */
+.target__status {
+  width: 18px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--spot);
+}
+
+/* ---------- working / done ----------
+   One accent carries both: the pulse is --spot at low alpha, the
+   settle is --spot at full. No per-target brand hue — the mark
+   and the label already say which app this is, and a second hue
+   would read as state. */
 @keyframes fmt-pulse {
   0%, 100% {
-    border-color: rgb(var(--glow-rgb) / 0.35);
-    box-shadow: 0 0 0 0 rgb(var(--glow-rgb) / 0), 0 0 10px -4px rgb(var(--glow-rgb) / 0.4);
+    border-color: color-mix(in srgb, var(--spot) 35%, transparent);
+    box-shadow: 0 0 0 0 transparent;
   }
   50% {
-    border-color: rgb(var(--glow-rgb) / 0.9);
-    box-shadow: 0 0 0 3px rgb(var(--glow-rgb) / 0.12), 0 0 22px -2px rgb(var(--glow-rgb) / 0.55);
+    border-color: var(--spot);
+    box-shadow: 0 0 0 3px var(--spot-soft);
   }
 }
-
-/* Light sweeping across the button, so it reads as "in progress" not just "highlighted" */
+/* light sweeping across, so it reads as "in progress" not "selected" */
 @keyframes fmt-sweep {
   from { transform: translateX(-120%); }
   to   { transform: translateX(220%); }
 }
-
-.fmt-btn.is-working {
-  animation: fmt-pulse 1.4s ease-in-out infinite;
+@keyframes fmt-settle {
+  0%   { box-shadow: 0 0 0 3px var(--spot-soft); }
+  100% { box-shadow: 0 0 0 0 transparent; }
 }
-.fmt-btn.is-working::after {
+@keyframes fmt-breathe {
+  0%, 100% { opacity: .55; transform: scale(.94); }
+  50%      { opacity: 1;   transform: scale(1.06); }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin .8s linear infinite; }
+
+.target.is-working { animation: fmt-pulse 1.4s ease-in-out infinite; }
+.target.is-working::after {
   content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
+  position: absolute; inset: 0 auto 0 0;
   width: 45%;
   pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgb(var(--glow-rgb) / 0.14), transparent);
+  background: linear-gradient(90deg, transparent, var(--spot-soft), transparent);
   animation: fmt-sweep 1.4s ease-in-out infinite;
 }
+.target.is-working .target__icon { color: var(--spot); animation: fmt-breathe 1.4s ease-in-out infinite; }
+.target.is-done { border-color: var(--spot); animation: fmt-settle .85s ease-out forwards; }
+.target.is-done .target__icon { color: var(--spot); }
 
-@keyframes fmt-settle {
-  0%   { box-shadow: 0 0 0 3px var(--color-success-ghost), 0 0 24px -2px var(--color-success); }
-  100% { box-shadow: 0 0 0 0 transparent, 0 0 0 0 transparent; }
+/* ------------------------------------------------------------
+   NOTICES
+   ------------------------------------------------------------ */
+.notice {
+  display: flex; align-items: flex-start; gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line-2);
+  border-left: 2px solid var(--error);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--dim);
+  font-size: var(--text-sm);
+  line-height: var(--lh-sm);
+  text-align: left;
 }
-.fmt-btn.is-done {
-  border-color: var(--color-success);
-  animation: fmt-settle 0.85s ease-out forwards;
+button.notice { cursor: pointer; width: 100%; align-items: center; }
+button.notice:hover { background: var(--mass); }
+.notice__icon { flex-shrink: 0; color: var(--error); margin-top: 1px; }
+
+/* ------------------------------------------------------------
+   OVERLAYS
+   ------------------------------------------------------------ */
+.scrim {
+  position: fixed; inset: 0; z-index: 50;
+  background: var(--scrim);
+  backdrop-filter: blur(3px);
+  display: flex;
+  -webkit-app-region: no-drag;
+}
+.scrim--right  { align-items: stretch; justify-content: flex-end; }
+.scrim--center { align-items: center;  justify-content: center; }
+
+.drawer {
+  width: 340px;
+  display: flex; flex-direction: column;
+  background: var(--bg);
+  border-left: 1px solid var(--line-2);
+  box-shadow: var(--shadow-lg);
+}
+.dialog {
+  width: 480px; max-height: 88vh;
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--bg);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
 }
 
-/* Icon breathes with the pulse */
-@keyframes fmt-breathe {
-  0%, 100% { opacity: 0.55; transform: scale(0.94); }
-  50%      { opacity: 1;    transform: scale(1.06); }
+.overlay-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-6) var(--space-4);
+  flex-shrink: 0;
 }
-.fmt-btn.is-working .fmt-icon { animation: fmt-breathe 1.4s ease-in-out infinite; }
+.drawer .overlay-head { height: var(--titlebar); padding-block: 0; }
+.overlay-actions { display: flex; align-items: center; gap: var(--space-2); }
 
+.rule { height: 1px; background: var(--line); flex-shrink: 0; }
+
+/* ------------------------------------------------------------
+   CONTROLS
+   ------------------------------------------------------------ */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-5);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease),
+              border-color var(--duration-fast) var(--ease),
+              opacity var(--duration-fast) var(--ease);
+}
+.btn--brand { background: var(--spot); color: var(--spot-ink); }
+.btn--brand:hover:not(:disabled) { background: color-mix(in srgb, var(--spot) 86%, var(--ink)); }
+.btn--ghost { background: transparent; color: var(--dim); border-color: var(--line-2); }
+.btn--ghost:hover { background: var(--panel); color: var(--ink); }
+.btn:disabled { opacity: .5; cursor: default; }
+
+/* a text-only action, for destructive verbs that must not look like a target */
+.link-btn {
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--faint);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease);
+}
+.link-btn:hover { color: var(--ink); }
+.link-btn--danger:hover { color: var(--error); }
+
+/* ---------- fields ---------- */
+.field { display: flex; flex-direction: column; gap: var(--space-2); }
+.field > .eyebrow { margin-bottom: var(--space-1); }
+
+.input, .textarea {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: border-color var(--duration-fast) var(--ease),
+              background var(--duration-fast) var(--ease);
+}
+.input::placeholder, .textarea::placeholder { color: var(--faint-2); }
+.input:focus, .textarea:focus { border-color: var(--spot); background: var(--mass); }
+.textarea { font-family: var(--font-mono); font-size: var(--text-xs); line-height: 1.7; }
+.input--mono { font-family: var(--font-mono); letter-spacing: var(--tracking-normal); }
+
+/* ---------- selectable options ----------
+   `.choice` is the shared selected/unselected control: the tab
+   strip, the provider picker, the model chips and the prompt
+   picker are all the same object at different sizes. Selected
+   state is the accent on a tint — never a different shape. */
+.choice {
+  display: inline-flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-tight);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease),
+              border-color var(--duration-fast) var(--ease),
+              color var(--duration-fast) var(--ease);
+}
+.choice:hover { background: var(--panel); color: var(--ink); }
+.choice.is-on {
+  background: var(--spot-soft);
+  border-color: var(--spot);
+  color: var(--spot);
+}
+.choice--block { width: 100%; }
+.choice--sm { padding: var(--space-1) var(--space-2); font-size: var(--text-xs); }
+
+/* the tab strip is a choice with no box — a rule under the active one */
+.tabs { display: flex; gap: var(--space-4); padding: 0 var(--space-6); }
+.tab {
+  padding: 0 0 var(--space-3);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--faint);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease),
+              border-color var(--duration-fast) var(--ease);
+}
+.tab:hover { color: var(--ink); }
+.tab.is-on { color: var(--spot); border-bottom-color: var(--spot); }
+
+.choice-row  { display: flex; gap: var(--space-2); }
+.choice-row > .choice { flex: 1; }
+.choice-wrap { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+/* ---------- a grouped well ---------- */
+.card {
+  display: flex; flex-direction: column; gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: transparent;
+  transition: background var(--duration-fast) var(--ease),
+              border-color var(--duration-fast) var(--ease);
+}
+.card.is-active { background: var(--panel); border-color: var(--line-2); }
+.card__head { display: flex; align-items: center; gap: var(--space-2); }
+.card__title {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+}
+
+/* ------------------------------------------------------------
+   DIALOG / DRAWER BODIES
+   ------------------------------------------------------------ */
+.overlay-body {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: var(--space-5) var(--space-6);
+  display: flex; flex-direction: column; gap: var(--space-5);
+}
+.overlay-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  flex-shrink: 0;
+}
+.overlay-foot__actions { display: flex; gap: var(--space-2); }
+
+/* ------------------------------------------------------------
+   HISTORY
+   ------------------------------------------------------------ */
+.empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 200px; gap: var(--space-3);
+  color: var(--faint);
+}
+.empty__mark {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-md);
+  color: var(--faint-2);
+}
+
+.history-list { flex: 1; overflow-y: auto; }
+
+/* The row holds two sibling buttons — opening the entry and deleting it. The
+   delete sits on top of the opener rather than inside it, so both stay real
+   buttons and both stay reachable from the keyboard. */
+.history-item { position: relative; }
+.history-item__open {
+  display: block; width: 100%; text-align: left;
+  padding: var(--space-3) var(--space-6);
+  padding-right: var(--space-10); /* clears the delete affordance */
+  background: transparent;
+  border: none;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease),
+              border-color var(--duration-fast) var(--ease);
+}
+.history-item:hover .history-item__open { background: var(--panel); border-left-color: var(--line-2); }
+.history-item__text {
+  display: -webkit-box;
+  font-size: var(--text-sm);
+  line-height: var(--lh-sm);
+  color: var(--dim);
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  transition: color var(--duration-fast) var(--ease);
+}
+.history-item:hover .history-item__text { color: var(--ink); }
+.history-item__meta {
+  display: flex; align-items: center; gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.history-item__del {
+  position: absolute;
+  top: var(--space-3); right: var(--space-4);
+  display: flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px;
+  background: transparent; border: none;
+  border-radius: var(--radius-sm);
+  color: var(--faint-2);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease), background var(--duration-fast) var(--ease);
+}
+.history-item__del:hover { color: var(--error); background: var(--mass); }
+.copied { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--spot); }
+
+/* ------------------------------------------------------------
+   MOTION
+   Always honor prefers-reduced-motion: collapse the loops so
+   content lands in its final state rather than never arriving.
+   ------------------------------------------------------------ */
 @media (prefers-reduced-motion: reduce) {
-  .fmt-btn.is-working,
-  .fmt-btn.is-working::after,
-  .fmt-btn.is-working .fmt-icon,
-  .fmt-btn.is-done { animation: none; }
-  .fmt-btn.is-working { border-color: rgb(var(--glow-rgb) / 0.9); }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+  .target.is-working { border-color: var(--spot); }
+  .target.is-working::after { display: none; }
 }

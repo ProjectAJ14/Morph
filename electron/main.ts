@@ -97,7 +97,9 @@ async function createWindow(): Promise<void> {
     icon: iconPath,
     titleBarStyle: "hiddenInset",
     trafficLightPosition: { x: 16, y: 16 },
-    backgroundColor: "#09090b",
+    // The ink ground's --bg (src/styles/tokens.css). Only the first paint
+    // uses it; the renderer pushes the live value via window:set-background.
+    backgroundColor: "#17171a",
     show: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -215,6 +217,10 @@ function setupIpcHandlers(): void {
 
   // Hide the window once the renderer has shown its confirmation
   ipcMain.handle("window:hide", () => mainWindow?.hide());
+  // Keeps the native frame (corners, resize repaint) on the active ground.
+  ipcMain.handle("window:set-background", (_e, color: string) => {
+    if (/^#[0-9a-fA-F]{3,8}$/.test(color)) mainWindow?.setBackgroundColor(color);
+  });
 
   // Re-copy a past result, formatted for its original target
   ipcMain.handle("clipboard:write-formatted", (_event, markdown: string, target: Target) =>
