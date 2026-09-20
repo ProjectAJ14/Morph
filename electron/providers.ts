@@ -31,8 +31,16 @@ export const PROVIDER_LABELS: Record<ProviderId, string> = {
 
 const MAX_TOKENS = 4096;
 
+// Corporate TLS interceptors present their own certificate and install the matching root in the
+// OS trust store. Node's global fetch only ever reads OpenSSL's bundled roots, so behind one of
+// those every provider dies with "unable to get local issuer certificate". Electron's net.fetch
+// goes through Chromium, which reads the OS store (and the OS proxy config with it).
+// Required lazily: the self-check at the bottom of this file runs under plain node.
+const netFetch: typeof fetch = (input, init) =>
+  require("electron").net.fetch(input instanceof URL ? input.href : (input as string | Request), init);
+
 async function completeAnthropic(apiKey: string, model: string, system: string, text: string): Promise<string> {
-  const res = await new Anthropic({ apiKey }).messages.create({
+  const res = await new Anthropic({ apiKey, fetch: netFetch }).messages.create({
     model,
     max_tokens: MAX_TOKENS,
     system,
@@ -46,7 +54,7 @@ async function completeAnthropic(apiKey: string, model: string, system: string, 
 }
 
 async function completeGroq(apiKey: string, model: string, system: string, text: string): Promise<string> {
-  const res = await new Groq({ apiKey }).chat.completions.create({
+  const res = await new Groq({ apiKey, fetch: netFetch }).chat.completions.create({
     model,
     max_tokens: MAX_TOKENS,
     messages: [
@@ -77,7 +85,7 @@ export function azureChatUrl({ endpoint, model, apiVersion }: ProviderConfig): s
 const AZURE_TIMEOUT_MS = 60_000;
 
 async function completeAzure(provider: ProviderConfig, system: string, text: string): Promise<string> {
-  const res = await fetch(azureChatUrl(provider), {
+  const res = await netFetch(azureChatUrl(provider), {
     method: "POST",
     headers: { "api-key": provider.apiKey, "content-type": "application/json" },
     signal: AbortSignal.timeout(AZURE_TIMEOUT_MS),
