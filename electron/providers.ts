@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import Groq from "groq-sdk";
-import type { MorphConfig, ProviderId } from "./config";
+import type { MorphConfig, ProviderConfig, ProviderId } from "./config";
 
 export interface ModelOption {
   id: string;
@@ -18,11 +18,15 @@ export const PROVIDER_MODELS: Record<ProviderId, ModelOption[]> = {
     { id: "llama-3.1-8b-instant", label: "Llama 3.1 8B" },
     { id: "gemma2-9b-it", label: "Gemma 2 9B" },
   ],
+  // Azure deployments are named by whoever created the resource, so there is no catalog to
+  // offer. An empty list tells the settings UI to render a free-text deployment field.
+  azure: [],
 };
 
 export const PROVIDER_LABELS: Record<ProviderId, string> = {
   anthropic: "Anthropic",
   groq: "Groq",
+  azure: "Azure OpenAI",
 };
 
 const MAX_TOKENS = 4096;
@@ -53,6 +57,44 @@ async function completeGroq(apiKey: string, model: string, system: string, text:
   return (res.choices[0]?.message?.content ?? "").trim();
 }
 
+/**
+ * Azure routes on the deployment name, not a model id, so the deployment is part of the URL and
+ * `model` holds it. Preview api-versions are offered per resource and retired on Azure's schedule,
+ * so a newer resource can reject this one with a 400; that is what the override field is for.
+ */
+const AZURE_API_VERSION = "2025-01-01-preview";
+
+export function azureChatUrl({ endpoint, model, apiVersion }: ProviderConfig): string {
+  const base = (endpoint ?? "").trim().replace(/\/+$/, "");
+  const version = (apiVersion ?? "").trim() || AZURE_API_VERSION;
+  return `${base}/openai/deployments/${encodeURIComponent(model.trim())}/chat/completions?api-version=${version}`;
+}
+
+// Auth is the `api-key` header, not a bearer token. No max_tokens: newer api-versions reject it in
+// favour of max_completion_tokens, and Azure's own default cap is past anything a chat message hits.
+// The SDKs time out on their own; a bare fetch does not, and a format click that never settles
+// leaves the button spinning with nothing to cancel it.
+const AZURE_TIMEOUT_MS = 60_000;
+
+async function completeAzure(provider: ProviderConfig, system: string, text: string): Promise<string> {
+  const res = await fetch(azureChatUrl(provider), {
+    method: "POST",
+    headers: { "api-key": provider.apiKey, "content-type": "application/json" },
+    signal: AbortSignal.timeout(AZURE_TIMEOUT_MS),
+    body: JSON.stringify({
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: text },
+      ],
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`Azure OpenAI ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  }
+  const json: any = await res.json();
+  return (json.choices?.[0]?.message?.content ?? "").trim();
+}
+
 // Models emit dashes as connectors no matter what the prompt says, so strip them after the fact.
 // Code spans are left alone: "--flag" and friends are real there.
 const CODE_SPAN = /(```[\s\S]*?```|`[^`\n]*`)/;
@@ -81,13 +123,21 @@ function fixLine(line: string): string {
 /** Runs the active provider. Throws with a readable message if it isn't configured. */
 export async function complete(config: MorphConfig, system: string, text: string): Promise<string> {
   const id = config.activeProvider;
-  const { apiKey, model } = config.providers[id];
+  const provider = config.providers[id];
+  const { apiKey, model } = provider;
   if (!apiKey) {
     throw new Error(`No ${PROVIDER_LABELS[id]} API key configured. Open settings to add one.`);
   }
-  const out = id === "anthropic"
-    ? await completeAnthropic(apiKey, model, system, text)
-    : await completeGroq(apiKey, model, system, text);
+  if (id === "azure" && !(provider.endpoint ?? "").trim()) {
+    throw new Error("No Azure OpenAI endpoint configured. Open settings to add one.");
+  }
+  if (id === "azure" && !model.trim()) {
+    throw new Error("No Azure OpenAI deployment configured. Open settings to add one.");
+  }
+  const out =
+    id === "anthropic" ? await completeAnthropic(apiKey, model, system, text)
+    : id === "groq" ? await completeGroq(apiKey, model, system, text)
+    : await completeAzure(provider, system, text);
   if (!out) throw new Error("The model returned an empty response.");
   return stripDashes(out);
 }
@@ -110,6 +160,16 @@ if (require.main === module) {
   eq("\u2014leading with no space", "leading with no space");
   eq("Trailing dash \u2014", "Trailing dash");
   assert.strictEqual(/[\u2013\u2014]|--/.test(stripDashes("a \u2014 b \u2013 c -- d")), false);
+
+  const azure = (over: Partial<ProviderConfig>): string =>
+    azureChatUrl({ apiKey: "k", model: "gpt-5-5-2", endpoint: "https://r.openai.azure.com", ...over });
+
+  const CHAT = "/openai/deployments/gpt-5-5-2/chat/completions?api-version=";
+  assert.strictEqual(azure({}), `https://r.openai.azure.com${CHAT}${AZURE_API_VERSION}`);
+  assert.strictEqual(azure({ endpoint: "https://r.openai.azure.com/ " }), `https://r.openai.azure.com${CHAT}${AZURE_API_VERSION}`);
+  assert.strictEqual(azure({ apiVersion: " 2024-10-21 " }), `https://r.openai.azure.com${CHAT}2024-10-21`);
+  assert.strictEqual(azure({ apiVersion: "" }), `https://r.openai.azure.com${CHAT}${AZURE_API_VERSION}`);
+  assert.strictEqual(azure({ model: " my deploy " }), `https://r.openai.azure.com/openai/deployments/my%20deploy/chat/completions?api-version=${AZURE_API_VERSION}`);
 
   console.log("providers: all assertions passed");
 }

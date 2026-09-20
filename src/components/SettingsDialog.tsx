@@ -4,11 +4,16 @@ import { X, Check } from "lucide-react";
 import { applyGround, readGround, type Ground } from "../lib/ground";
 import type { ProviderId, Target } from "../types/morph";
 
-const PROVIDER_IDS: ProviderId[] = ["anthropic", "groq"];
-const KEY_PLACEHOLDER: Record<ProviderId, string> = { anthropic: "sk-ant-...", groq: "gsk_..." };
+const PROVIDER_IDS: ProviderId[] = ["anthropic", "groq", "azure"];
+const KEY_PLACEHOLDER: Record<ProviderId, string> = {
+  anthropic: "sk-ant-...",
+  groq: "gsk_...",
+  azure: "azure openai key",
+};
 const KEY_SOURCE: Record<ProviderId, string> = {
   anthropic: "console.anthropic.com",
   groq: "console.groq.com",
+  azure: "portal.azure.com",
 };
 
 const TARGETS: { id: Target; label: string }[] = [
@@ -36,6 +41,10 @@ export function SettingsDialog() {
   const [activeProvider, setActiveProvider] = useState<ProviderId>("anthropic");
   const [keys, setKeys] = useState<Record<string, string>>({});
   const [models, setModels] = useState<Record<string, string>>({});
+  // Azure needs the resource URL and, when the resource rejects the built-in default, an
+  // api-version. Neither is a secret, so both round-trip in full.
+  const [endpoint, setEndpoint] = useState("");
+  const [apiVersion, setApiVersion] = useState("");
   const [prompts, setPrompts] = useState<Record<string, string>>({});
   const [promptTarget, setPromptTarget] = useState<Target>("slack");
   const [shortcut, setShortcut] = useState("");
@@ -50,6 +59,8 @@ export function SettingsDialog() {
       setActiveProvider(config.activeProvider);
       setKeys({});
       setModels(Object.fromEntries(PROVIDER_IDS.map((id) => [id, config.providers[id].model])));
+      setEndpoint(config.providers.azure.endpoint);
+      setApiVersion(config.providers.azure.apiVersion);
       setPrompts({ ...config.prompts });
       setShortcut(config.globalShortcut);
       setGround(readGround());
@@ -76,7 +87,14 @@ export function SettingsDialog() {
         prompts,
         providers: Object.fromEntries(
           // An empty apiKey tells main to keep the stored one.
-          PROVIDER_IDS.map((id) => [id, { model: models[id], apiKey: (keys[id] ?? "").trim() }])
+          PROVIDER_IDS.map((id) => [
+            id,
+            {
+              model: models[id],
+              apiKey: (keys[id] ?? "").trim(),
+              ...(id === "azure" ? { endpoint: endpoint.trim(), apiVersion: apiVersion.trim() } : {}),
+            },
+          ])
         ),
       });
       await loadConfig();
@@ -162,17 +180,55 @@ export function SettingsDialog() {
                     }
                   />
 
-                  <div className="choice-wrap">
-                    {config.providerModels[id].map((m) => (
-                      <button
-                        key={m.id}
-                        className={`choice choice--sm ${models[id] === m.id ? "is-on" : ""}`}
-                        onClick={() => setModels({ ...models, [id]: m.id })}
-                      >
-                        {m.label}
-                      </button>
-                    ))}
-                  </div>
+                  {/* Four stacked inputs, so each one is labelled: a placeholder disappears
+                      the moment it is filled, and these are not guessable from their values. */}
+                  {id === "azure" && (
+                    <>
+                      <div className="field">
+                        <span className="eyebrow">Endpoint</span>
+                        <input
+                          className="input"
+                          value={endpoint}
+                          onChange={(e) => setEndpoint(e.target.value)}
+                          placeholder="https://your-resource.openai.azure.com"
+                        />
+                      </div>
+                      <div className="field">
+                        <span className="eyebrow">API version</span>
+                        <input
+                          className="input"
+                          value={apiVersion}
+                          onChange={(e) => setApiVersion(e.target.value)}
+                          placeholder="blank uses the built-in default"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* No catalog for this provider (Azure): the deployment is typed in. */}
+                  {config.providerModels[id].length === 0 ? (
+                    <div className="field">
+                      <span className="eyebrow">Deployment</span>
+                      <input
+                        className="input"
+                        value={models[id] ?? ""}
+                        onChange={(e) => setModels({ ...models, [id]: e.target.value })}
+                        placeholder="deployment name, e.g. gpt-5-5-2"
+                      />
+                    </div>
+                  ) : (
+                    <div className="choice-wrap">
+                      {config.providerModels[id].map((m) => (
+                        <button
+                          key={m.id}
+                          className={`choice choice--sm ${models[id] === m.id ? "is-on" : ""}`}
+                          onClick={() => setModels({ ...models, [id]: m.id })}
+                        >
+                          {m.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </>

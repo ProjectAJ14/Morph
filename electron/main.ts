@@ -242,7 +242,14 @@ function setupIpcHandlers(): void {
       providers: Object.fromEntries(
         Object.entries(config.providers).map(([id, p]) => [
           id,
-          { model: p.model, apiKey: maskKey(p.apiKey), apiKeySet: !!p.apiKey },
+          {
+            model: p.model,
+            apiKey: maskKey(p.apiKey),
+            apiKeySet: !!p.apiKey,
+            // Not secrets, so they go out in full.
+            endpoint: p.endpoint ?? "",
+            apiVersion: p.apiVersion ?? "",
+          },
         ])
       ),
       defaultPrompts: DEFAULT_PROMPTS,
@@ -262,6 +269,8 @@ function setupIpcHandlers(): void {
         model: incoming.model ?? current.model,
         // An empty apiKey means "leave it alone" — the renderer only ever sees a mask.
         apiKey: incoming.apiKey ? incoming.apiKey : current.apiKey,
+        endpoint: incoming.endpoint ?? current.endpoint,
+        apiVersion: incoming.apiVersion ?? current.apiVersion,
       };
     }
 

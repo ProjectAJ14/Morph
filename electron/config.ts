@@ -2,12 +2,17 @@ import { app } from "electron";
 import * as fs from "fs";
 import * as path from "path";
 
-export type ProviderId = "anthropic" | "groq";
+export type ProviderId = "anthropic" | "groq" | "azure";
 export type Target = "slack" | "teams" | "generic";
 
 export interface ProviderConfig {
   apiKey: string;
+  /** Azure routes on the deployment name, so for "azure" this holds that, not a catalog model id. */
   model: string;
+  /** Azure only: resource base URL, e.g. https://xxx.cognitiveservices.azure.com/ */
+  endpoint?: string;
+  /** Azure only: pins ?api-version= when the resource rejects the built-in default. */
+  apiVersion?: string;
 }
 
 export interface MorphConfig {
@@ -82,6 +87,7 @@ const DEFAULT_CONFIG: MorphConfig = {
   providers: {
     anthropic: { apiKey: "", model: "claude-sonnet-5" },
     groq: { apiKey: "", model: "llama-3.3-70b-versatile" },
+    azure: { apiKey: "", model: "", endpoint: "", apiVersion: "" },
   },
   prompts: DEFAULT_PROMPTS,
   globalShortcut: "CommandOrControl+Shift+M",
@@ -110,6 +116,7 @@ function migrate(raw: any): MorphConfig {
         apiKey: raw.groqApiKey ?? "",
         model: raw.model ?? DEFAULT_CONFIG.providers.groq.model,
       },
+      azure: { ...DEFAULT_CONFIG.providers.azure },
     },
   };
 }

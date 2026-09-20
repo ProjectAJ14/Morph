@@ -1,4 +1,4 @@
-export type ProviderId = "anthropic" | "groq";
+export type ProviderId = "anthropic" | "groq" | "azure";
 export type Target = "slack" | "teams" | "generic";
 
 export interface RewriteRecord {
@@ -15,7 +15,11 @@ export interface ProviderView {
   /** Masked, e.g. "••••1a2b". Never the real key. */
   apiKey: string;
   apiKeySet: boolean;
+  /** For "azure" this is the deployment name, not a catalog model id. */
   model: string;
+  /** Azure only. Not a secret, so it arrives unmasked. */
+  endpoint: string;
+  apiVersion: string;
 }
 
 export interface MorphConfig {
