@@ -1,5 +1,5 @@
 import { useAppStore } from "../stores/app-store";
-import { Slack, FileText, Loader2, Check, AlertCircle } from "lucide-react";
+import { Slack, FileText, Loader2, Check, AlertCircle, Cpu, Github } from "lucide-react";
 import type { Target } from "../types/morph";
 
 /** Microsoft Teams mark — lucide has no Teams icon. Sized a touch under the
@@ -76,10 +76,31 @@ export function FormatView() {
         </>
       )}
 
+      {config && (
+        <button
+          className="stamp"
+          onClick={() => setSettingsOpen(true)}
+          title="Change provider in settings"
+        >
+          <Cpu size={12} strokeWidth={1.8} />
+          {config.providerLabels[config.activeProvider]}
+        </button>
+      )}
+
       {status.kind === "error" && (
         <div className="notice">
           <AlertCircle size={14} className="notice__icon" />
-          {status.message}
+          <span className="notice__text">{status.message}</span>
+          {/* The message here is the flattened one; main still holds the cause
+              chain that makes the issue worth filing. */}
+          <button
+            className="notice__action"
+            onClick={() => window.morph.reportIssue()}
+            title="Open a GitHub issue, prefilled with what failed"
+          >
+            <Github size={13} strokeWidth={1.8} />
+            Report
+          </button>
         </div>
       )}
     </div>

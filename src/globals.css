@@ -88,7 +88,7 @@ textarea { resize: none; }
    toggle possible at all.
    ------------------------------------------------------------ */
 .app  { display: flex; height: 100vh; width: 100vw; background: var(--bg); }
-.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
 
 .titlebar {
   height: var(--titlebar);
@@ -163,6 +163,17 @@ textarea { resize: none; }
 .view__head .sub { margin-top: var(--space-2); max-width: 46ch; }
 
 .targets { display: flex; flex-direction: column; gap: var(--space-2); }
+
+/* Which engine is doing the rewriting — a footnote, not a control. Pinned to
+   the pane corner so it sits out of the way of the targets. */
+.stamp {
+  position: absolute; right: var(--gut); bottom: var(--gut);
+  display: flex; align-items: center; gap: var(--space-1);
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font-size: var(--text-xs); line-height: var(--lh-xs);
+  color: var(--faint);
+}
+.stamp:hover { color: var(--dim); }
 
 /* A target is a hairline-ruled row, not a card. Its identity is
    the mark and the label; colour is reserved for state. */
@@ -273,6 +284,16 @@ textarea { resize: none; }
 button.notice { cursor: pointer; width: 100%; align-items: center; }
 button.notice:hover { background: var(--mass); }
 .notice__icon { flex-shrink: 0; color: var(--error); margin-top: 1px; }
+.notice__text { flex: 1; min-width: 0; }
+/* Text affordance, not a button: the error already spent the row's attention. */
+.notice__action {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: var(--space-1);
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font-size: var(--text-xs); line-height: var(--lh-xs);
+  color: var(--dim);
+}
+.notice__action:hover { color: var(--ink); }
 
 /* ------------------------------------------------------------
    OVERLAYS

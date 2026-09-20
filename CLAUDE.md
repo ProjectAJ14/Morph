@@ -17,6 +17,9 @@ npm run electron:build # Production build
     optional api-version override for resources that reject the built-in default
   - `clipboard-format.ts` — writes both clipboard flavors (`text/html` + `text/plain`)
   - `mrkdwn.ts` — Markdown → Slack mrkdwn, with an assert self-check (`npm run check`)
+  - `report.ts` — a failed run → a prefilled GitHub issue. The cause chain is captured in
+    `format:run`'s catch because IPC flattens an Error to its message; everything bound for
+    the issue URL is redacted first (keys, Azure resource host, home paths)
 - **src/** — Renderer (React): UI components, Zustand store
   - `styles/tokens.css` — **the design system**; see below
   - `globals.css` — base + component classes, built entirely on those tokens

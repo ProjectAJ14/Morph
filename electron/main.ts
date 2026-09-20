@@ -9,10 +9,12 @@ import {
   shell,
 } from "electron";
 import * as path from "path";
+import * as os from "os";
 import { readConfig, writeConfig, saveWindowBounds, DEFAULT_PROMPTS, MorphConfig, Target } from "./config";
 import { getDb, insertRewrite, getHistory, deleteRewrite, clearHistory, closeDb } from "./database";
 import { complete, PROVIDER_MODELS, PROVIDER_LABELS } from "./providers";
 import { writeFormatted } from "./clipboard-format";
+import { errorChain, issueUrl, Failure } from "./report";
 
 process.on("uncaughtException", (err) => console.error("[Morph] Uncaught exception:", err));
 process.on("unhandledRejection", (reason) => console.error("[Morph] Unhandled rejection:", reason));
@@ -29,6 +31,8 @@ app.setAboutPanelOptions({
 const isDev = !app.isPackaged;
 let mainWindow: BrowserWindow | null = null;
 let isQuitting = false;
+/** Context of the most recent failed format run, for the report button. */
+let lastFailure: Failure | null = null;
 
 // Enforce single instance
 const gotTheLock = app.requestSingleInstanceLock();
@@ -204,15 +208,41 @@ function setupIpcHandlers(): void {
   ipcMain.handle("format:run", async (_event, target: Target) => {
     const config = readConfig();
     const input = clipboard.readText();
-    if (!input.trim()) {
-      throw new Error("Clipboard is empty. Copy the message you want to format first.");
+    try {
+      // Inside the try so every exit from this handler lands in `lastFailure`:
+      // the Report button must describe the error it is sitting next to. An
+      // empty clipboard is usually user error, but a clipboard Morph *cannot
+      // read* looks identical from here, and that one is a bug.
+      if (!input.trim()) {
+        throw new Error("Clipboard is empty. Copy the message you want to format first.");
+      }
+      const systemPrompt = config.prompts[target];
+      const output = await complete(config, systemPrompt, input);
+      writeFormatted(output, target);
+      insertRewrite(input, output, systemPrompt, config.providers[config.activeProvider].model, target);
+      activateTarget(target);
+      return output;
+    } catch (err) {
+      // Caught here because this is the only place the cause chain still exists:
+      // IPC flattens an Error to its message on the way to the renderer.
+      console.error("[Morph] Format failed:", err);
+      lastFailure = {
+        detail: errorChain(err),
+        target,
+        provider: PROVIDER_LABELS[config.activeProvider],
+        model: config.providers[config.activeProvider].model,
+        inputLength: input.length,
+        version: require("../package.json").version,
+        platform: `${process.platform} ${os.release()} ${process.arch}`,
+        electron: process.versions.electron,
+      };
+      throw err;
     }
-    const systemPrompt = config.prompts[target];
-    const output = await complete(config, systemPrompt, input);
-    writeFormatted(output, target);
-    insertRewrite(input, output, systemPrompt, config.providers[config.activeProvider].model, target);
-    activateTarget(target);
-    return output;
+  });
+
+  // Report the run that just failed. Nothing to report until one does.
+  ipcMain.handle("report:open", () => {
+    if (lastFailure) shell.openExternal(issueUrl(lastFailure));
   });
 
   // Hide the window once the renderer has shown its confirmation
