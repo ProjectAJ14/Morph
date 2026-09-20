@@ -12,7 +12,9 @@ npm run electron:build # Production build
 
 ## Architecture
 - **electron/** — Main process (Node.js): window management, IPC, provider calls, SQLite database
-  - `providers.ts` — Anthropic + Groq adapters; the active one is chosen in settings
+  - `providers.ts` — Anthropic, Groq and Azure OpenAI adapters; the active one is chosen in settings.
+    Azure routes on a deployment name (typed in, no catalog) plus a resource endpoint, and takes an
+    optional api-version override for resources that reject the built-in default
   - `clipboard-format.ts` — writes both clipboard flavors (`text/html` + `text/plain`)
   - `mrkdwn.ts` — Markdown → Slack mrkdwn, with an assert self-check (`npm run check`)
 - **src/** — Renderer (React): UI components, Zustand store
