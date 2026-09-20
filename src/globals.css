@@ -6,13 +6,14 @@
    hex: those pin a component to one ground and break the toggle.
 
    Sizes name a scale step for the same reason — retuning the
-   spacing or the radii should be an edit to tokens.css, not a
-   sweep through here and the components.
+   spacing should be an edit to tokens.css, not a sweep through
+   here and the components.
    ============================================================ */
 
 @import "./styles/tokens.css";
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* Boxy on purpose: no element rounds, not even a native control. */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; border-radius: 0; }
 
 html, body, #root { height: 100%; width: 100%; }
 
@@ -27,6 +28,10 @@ body {
      glyphs, and ink is the default ground. */
 }
 
+/* lucide draws every stroke with rounded caps and joins. Square them:
+   round icon corners undo the boxy chrome faster than any radius did. */
+svg { stroke-linecap: square; stroke-linejoin: miter; }
+
 button, input, textarea { font: inherit; color: inherit; }
 textarea { resize: none; }
 
@@ -35,7 +40,7 @@ textarea { resize: none; }
 
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: var(--radius-pill); }
+::-webkit-scrollbar-thumb { background: var(--line-2); }
 ::-webkit-scrollbar-thumb:hover { background: var(--faint-2); }
 
 /* Drag region — only the titlebar and the rail */
@@ -118,7 +123,6 @@ textarea { resize: none; }
   width: 28px; height: 28px;
   margin-top: var(--titlebar); margin-bottom: var(--space-4);
   flex-shrink: 0;
-  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 .rail__logo img { width: 100%; height: 100%; display: block; object-fit: cover; }
@@ -127,7 +131,6 @@ textarea { resize: none; }
 /* the "no API key" tell, directly above the settings gear it points at */
 .rail__alert {
   width: 5px; height: 5px;
-  border-radius: var(--radius-pill);
   background: var(--error);
   margin-bottom: var(--space-1);
 }
@@ -136,7 +139,6 @@ textarea { resize: none; }
   width: 34px; height: 34px;
   display: flex; align-items: center; justify-content: center;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--faint);
   cursor: pointer;
@@ -170,7 +172,6 @@ textarea { resize: none; }
   padding: var(--space-3) var(--space-4);
   text-align: left;
   border: 1px solid var(--line-2);
-  border-radius: var(--radius-md);
   background: var(--panel);
   color: var(--ink);
   cursor: pointer;
@@ -263,7 +264,6 @@ textarea { resize: none; }
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--line-2);
   border-left: 2px solid var(--error);
-  border-radius: var(--radius-md);
   background: var(--panel);
   color: var(--dim);
   font-size: var(--text-sm);
@@ -299,7 +299,6 @@ button.notice:hover { background: var(--mass); }
   display: flex; flex-direction: column; overflow: hidden;
   background: var(--bg);
   border: 1px solid var(--line-2);
-  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
 }
 
@@ -324,7 +323,6 @@ button.notice:hover { background: var(--mass); }
   font-weight: var(--weight-semibold);
   letter-spacing: var(--tracking-tight);
   border: 1px solid transparent;
-  border-radius: var(--radius-md);
   cursor: pointer;
   transition: background var(--duration-fast) var(--ease),
               border-color var(--duration-fast) var(--ease),
@@ -341,7 +339,6 @@ button.notice:hover { background: var(--mass); }
   padding: var(--space-1) var(--space-2);
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
   font-family: var(--font-mono);
   font-size: var(--text-micro);
   letter-spacing: var(--tracking-caps);
@@ -364,7 +361,6 @@ button.notice:hover { background: var(--mass); }
   background: var(--panel);
   color: var(--ink);
   border: 1px solid var(--line-2);
-  border-radius: var(--radius-md);
   outline: none;
   transition: border-color var(--duration-fast) var(--ease),
               background var(--duration-fast) var(--ease);
@@ -386,7 +382,6 @@ button.notice:hover { background: var(--mass); }
   font-weight: var(--weight-medium);
   letter-spacing: var(--tracking-tight);
   border: 1px solid var(--line-2);
-  border-radius: var(--radius-md);
   background: transparent;
   color: var(--dim);
   cursor: pointer;
@@ -431,7 +426,6 @@ button.notice:hover { background: var(--mass); }
   display: flex; flex-direction: column; gap: var(--space-3);
   padding: var(--space-4);
   border: 1px solid var(--line);
-  border-radius: var(--radius-md);
   background: transparent;
   transition: background var(--duration-fast) var(--ease),
               border-color var(--duration-fast) var(--ease);
@@ -471,7 +465,6 @@ button.notice:hover { background: var(--mass); }
   width: 40px; height: 40px;
   display: flex; align-items: center; justify-content: center;
   border: 1px solid var(--line-2);
-  border-radius: var(--radius-md);
   color: var(--faint-2);
 }
 
@@ -514,7 +507,6 @@ button.notice:hover { background: var(--mass); }
   display: flex; align-items: center; justify-content: center;
   width: 24px; height: 24px;
   background: transparent; border: none;
-  border-radius: var(--radius-sm);
   color: var(--faint-2);
   cursor: pointer;
   transition: color var(--duration-fast) var(--ease), background var(--duration-fast) var(--ease);
