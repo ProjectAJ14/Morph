@@ -38,6 +38,7 @@ export interface MorphBridge {
   isElectron: true;
   format: (target: Target) => Promise<string>;
   hideWindow: () => Promise<void>;
+  reportIssue: () => Promise<void>;
   setWindowBackground: (color: string) => Promise<void>;
   writeClipboardFormatted: (markdown: string, target: Target) => Promise<void>;
   getHistory: (limit?: number, offset?: number) => Promise<RewriteRecord[]>;

@@ -284,6 +284,16 @@ textarea { resize: none; }
 button.notice { cursor: pointer; width: 100%; align-items: center; }
 button.notice:hover { background: var(--mass); }
 .notice__icon { flex-shrink: 0; color: var(--error); margin-top: 1px; }
+.notice__text { flex: 1; min-width: 0; }
+/* Text affordance, not a button: the error already spent the row's attention. */
+.notice__action {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: var(--space-1);
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font-size: var(--text-xs); line-height: var(--lh-xs);
+  color: var(--dim);
+}
+.notice__action:hover { color: var(--ink); }
 
 /* ------------------------------------------------------------
    OVERLAYS
