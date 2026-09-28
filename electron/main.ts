@@ -218,7 +218,7 @@ function setupIpcHandlers(): void {
       }
       const systemPrompt = config.prompts[target];
       const output = await complete(config, systemPrompt, input);
-      writeFormatted(output, target);
+      writeFormatted(output, target, config.blockSpacing[target]);
       insertRewrite(input, output, systemPrompt, config.providers[config.activeProvider].model, target);
       activateTarget(target);
       return output;
@@ -254,7 +254,7 @@ function setupIpcHandlers(): void {
 
   // Re-copy a past result, formatted for its original target
   ipcMain.handle("clipboard:write-formatted", (_event, markdown: string, target: Target) =>
-    writeFormatted(markdown, target)
+    writeFormatted(markdown, target, readConfig().blockSpacing[target])
   );
 
   // Database
@@ -309,6 +309,7 @@ function setupIpcHandlers(): void {
       ...partial,
       providers,
       prompts: { ...config.prompts, ...partial.prompts },
+      blockSpacing: { ...config.blockSpacing, ...partial.blockSpacing },
     };
 
     if (partial.globalShortcut && partial.globalShortcut !== config.globalShortcut) {

@@ -7,11 +7,14 @@ const md = new MarkdownIt({ html: false, linkify: true, breaks: false });
 // Slack and Teams both drop CSS margins when they ingest pasted HTML, so every block
 // runs straight into the next one (see the "stuck together" paste). An explicit <br>
 // between top-level blocks is the only separator both clients actually honour.
+// How many is per target (settings slider): plain Markdown reads worse with any.
 const ENDS_BLOCK = /_close$|^(fence|code_block|hr|html_block)$/;
 // Lists already get their own breathing room in both clients — a <br> would double it.
 const SELF_SPACED = /^(bullet_list|ordered_list)_(open|close)$/;
 
 md.core.ruler.push("block_spacing", (state) => {
+  const lines = Number(state.env.spacing);
+  if (!lines) return;
   const spaced: typeof state.tokens = [];
   state.tokens.forEach((token, i) => {
     spaced.push(token);
@@ -24,15 +27,15 @@ md.core.ruler.push("block_spacing", (state) => {
       !SELF_SPACED.test(next.type)
     ) {
       const br = new state.Token("html_block", "", 0);
-      br.content = "<br>\n";
+      br.content = "<br>\n".repeat(lines);
       spaced.push(br);
     }
   });
   state.tokens = spaced;
 });
 
-export function renderHtml(markdown: string): string {
-  return md.render(markdown);
+export function renderHtml(markdown: string, spacing = 1): string {
+  return md.render(markdown, { spacing });
 }
 
 /**
@@ -44,12 +47,12 @@ export function renderHtml(markdown: string): string {
  * HTML <table> gets flattened by Slack. Add a table->aligned-text renderer if that
  * turns out to happen in practice.
  */
-export function writeFormatted(markdown: string, target: Target): void {
+export function writeFormatted(markdown: string, target: Target, spacing: number): void {
   // Required lazily so the self-check below runs under plain node.
   const { clipboard } = require("electron") as typeof import("electron");
   clipboard.write({
     text: target === "slack" ? toMrkdwn(markdown) : markdown,
-    html: renderHtml(markdown),
+    html: renderHtml(markdown, spacing),
   });
 }
 
@@ -73,6 +76,9 @@ if (require.main === module) {
   assert.strictEqual(count("a\n\nb\n\nc", "<br>"), 2);
   // List items are nested, so they are never split apart.
   assert.strictEqual(count("- one\n- two\n- three", "<br>"), 0);
+  // Slider: 0 means no separators, n means n of them.
+  assert.ok(!renderHtml("one\n\ntwo", 0).includes("<br>"));
+  assert.strictEqual(renderHtml("one\n\ntwo", 3).split("<br>").length - 1, 3);
 
   console.log("clipboard-format: all assertions passed");
 }

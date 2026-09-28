@@ -47,6 +47,7 @@ export function SettingsDialog() {
   const [apiVersion, setApiVersion] = useState("");
   const [prompts, setPrompts] = useState<Record<string, string>>({});
   const [promptTarget, setPromptTarget] = useState<Target>("slack");
+  const [spacing, setSpacing] = useState<Record<string, number>>({});
   const [shortcut, setShortcut] = useState("");
   // The ground applies instantly and persists itself — it is not part of the
   // config payload, so it never waits on Save.
@@ -62,6 +63,7 @@ export function SettingsDialog() {
       setEndpoint(config.providers.azure.endpoint);
       setApiVersion(config.providers.azure.apiVersion);
       setPrompts({ ...config.prompts });
+      setSpacing({ ...config.blockSpacing });
       setShortcut(config.globalShortcut);
       setGround(readGround());
       setError(null);
@@ -85,6 +87,7 @@ export function SettingsDialog() {
         activeProvider,
         globalShortcut: shortcut,
         prompts,
+        blockSpacing: spacing,
         providers: Object.fromEntries(
           // An empty apiKey tells main to keep the stored one.
           PROVIDER_IDS.map((id) => [
@@ -265,6 +268,22 @@ export function SettingsDialog() {
               >
                 Reset to default
               </button>
+
+              <label className="field">
+                <span className="eyebrow">
+                  Space between paragraphs: {spacing[promptTarget] ?? 0} blank line
+                  {spacing[promptTarget] === 1 ? "" : "s"}
+                </span>
+                <input
+                  className="slider"
+                  type="range"
+                  min={0}
+                  max={3}
+                  step={1}
+                  value={spacing[promptTarget] ?? 0}
+                  onChange={(e) => setSpacing({ ...spacing, [promptTarget]: Number(e.target.value) })}
+                />
+              </label>
 
               <p className="hint">
                 Your clipboard text is sent as the user message. Output should be Markdown — Morph
