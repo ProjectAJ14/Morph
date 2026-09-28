@@ -30,6 +30,7 @@ export interface MorphConfig {
   providerLabels: Record<ProviderId, string>;
   prompts: Record<Target, string>;
   defaultPrompts: Record<Target, string>;
+  blockSpacing: Record<Target, number>;
   globalShortcut: string;
   window: { width: number; height: number; x?: number; y?: number };
 }

@@ -20,6 +20,8 @@ export interface MorphConfig {
   activeProvider: ProviderId;
   providers: Record<ProviderId, ProviderConfig>;
   prompts: Record<Target, string>;
+  /** Blank lines (0-3) between blocks in the pasted HTML. Slack/Teams need one; plain Markdown none. */
+  blockSpacing: Record<Target, number>;
   globalShortcut: string;
   window: {
     width: number;
@@ -90,6 +92,7 @@ const DEFAULT_CONFIG: MorphConfig = {
     azure: { apiKey: "", model: "", endpoint: "", apiVersion: "" },
   },
   prompts: DEFAULT_PROMPTS,
+  blockSpacing: { slack: 1, teams: 1, generic: 0 },
   globalShortcut: "CommandOrControl+Shift+M",
   window: {
     width: 520,
@@ -131,6 +134,7 @@ export function readConfig(): MorphConfig {
         ...stored,
         providers: { ...DEFAULT_CONFIG.providers, ...stored.providers },
         prompts: { ...DEFAULT_PROMPTS, ...stored.prompts },
+        blockSpacing: { ...DEFAULT_CONFIG.blockSpacing, ...stored.blockSpacing },
         window: { ...DEFAULT_CONFIG.window, ...stored.window },
       };
     }
