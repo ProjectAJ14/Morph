@@ -23,7 +23,9 @@ mac:
     - dmg
     - zip
   darkModeSupport: true
-  hardenedRuntime: false
+  hardenedRuntime: true
+  entitlements: resources/entitlements.mac.plist
+  entitlementsInherit: resources/entitlements.mac.plist
 
 win:
   icon: resources/icon.ico
@@ -56,6 +58,8 @@ dmg:
 
 publish:
   provider: github
+  owner: ProjectAJ14
+  repo: Morph
 
 asar: true
 npmRebuild: true

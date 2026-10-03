@@ -114,12 +114,32 @@ jobs:
       - name: Compile Electron TypeScript
         run: npm run electron:compile
 
-      - name: Disable macOS code signing
+      - name: Configure macOS signing and notarization
         if: matrix.platform == 'mac'
-        run: echo "CSC_IDENTITY_AUTO_DISCOVERY=false" >> $GITHUB_ENV
+        shell: bash
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          for name in CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing required macOS release secret: $name"
+              exit 1
+            fi
+          done
 
       - name: Build Electron app
-        run: npx electron-builder ${{ matrix.build_args }} --publish never
+        run: npx electron-builder ${{ matrix.build_args }} --publish never ${{ matrix.platform == 'mac' && '-c.forceCodeSigning=true' || '' }}
+        env:
+          CSC_LINK: ${{ matrix.platform == 'mac' && secrets.CSC_LINK || '' }}
+          CSC_KEY_PASSWORD: ${{ matrix.platform == 'mac' && secrets.CSC_KEY_PASSWORD || '' }}
+          APPLE_ID: ${{ matrix.platform == 'mac' && secrets.APPLE_ID || '' }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ matrix.platform == 'mac' && secrets.APPLE_APP_SPECIFIC_PASSWORD || '' }}
+          APPLE_TEAM_ID: ${{ matrix.platform == 'mac' && secrets.APPLE_TEAM_ID || '' }}
+          CSC_FOR_PULL_REQUEST: false
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

@@ -190,3 +190,30 @@ Built with Electron, React, and Claude.
 *Copy. Click. Paste.*
 
 </div>
+
+## Automatic updates and macOS signing
+
+Installed direct-download builds check GitHub Releases at launch and every six hours,
+download updates in the background, and offer **Restart and Install** or **Later**.
+Use **Morph → Check for Updates…** to retry or install a downloaded update.
+Development builds do not check for updates. Mac App Store builds use store updates.
+
+Follow the [step-by-step release setup guide](docs/release-setup.md).
+Before the next release, configure these GitHub Actions repository secrets:
+
+- `CSC_LINK`: base64-encoded `.p12` export of your **Developer ID Application** certificate, including its private key.
+- `CSC_KEY_PASSWORD`: the export password for that certificate.
+- `APPLE_ID`: your Apple developer account email.
+- `APPLE_APP_SPECIFIC_PASSWORD`: an app-specific password for notarization.
+- `APPLE_TEAM_ID`: your Apple developer team ID.
+
+Keep credentials out of source control and chat. The macOS release job requires
+these secrets and code signing; electron-builder submits the signed app to Apple
+for notarization before packaging it. Developer ID is for direct distribution;
+an Apple Distribution certificate for the Mac App Store is a different certificate.
+
+Existing unsigned installations require one manual install of the first signed
+release containing the updater. Subsequent signed releases can update in-app.
+Signed and notarized releases should open without the old `xattr` workaround.
+Verify a signed release on macOS and test an upgrade between two released versions
+before declaring the update pipeline production-ready.
