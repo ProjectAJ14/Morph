@@ -15,6 +15,7 @@ import { getDb, insertRewrite, getHistory, deleteRewrite, clearHistory, closeDb 
 import { complete, PROVIDER_MODELS, PROVIDER_LABELS } from "./providers";
 import { writeFormatted } from "./clipboard-format";
 import { errorChain, issueUrl, Failure } from "./report";
+import { startUpdates, checkForUpdates } from "./updates";
 
 process.on("uncaughtException", (err) => console.error("[Morph] Uncaught exception:", err));
 process.on("unhandledRejection", (reason) => console.error("[Morph] Unhandled rejection:", reason));
@@ -118,6 +119,7 @@ async function createWindow(): Promise<void> {
       label: APP_NAME,
       submenu: [
         { role: "about", label: `About ${APP_NAME}` },
+        { label: "Check for Updates…", click: () => { void checkForUpdates(true); } },
         { type: "separator" },
         { role: "services" },
         { type: "separator" },
@@ -334,6 +336,7 @@ async function startApp(): Promise<void> {
 
   // Create window
   await createWindow();
+  startUpdates();
 
   // Register global shortcut
   const config = readConfig();
