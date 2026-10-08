@@ -12,7 +12,8 @@
     "electron:dev": "npm run electron:compile && node electron/dev-start.js",
     "electron:build": "npm run build && npm run electron:compile && electron-builder",
     "postinstall": "electron-builder install-app-deps",
-    "check": "node scripts/check-tokens.mjs && npm run electron:compile && node dist-electron/mrkdwn.js && node dist-electron/clipboard-format.js && node dist-electron/providers.js && node dist-electron/report.js && node scripts/check-updates.cjs"
+    "check": "node scripts/check-tokens.mjs && npm run electron:compile && node dist-electron/mrkdwn.js && node dist-electron/clipboard-format.js && node dist-electron/providers.js && node dist-electron/report.js && node scripts/ai-eval/lib.mjs && node scripts/check-updates.cjs",
+    "ai:eval": "npm run electron:compile && node scripts/ai-eval/run.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.124.0",
