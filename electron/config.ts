@@ -31,10 +31,21 @@ export interface MorphConfig {
   };
 }
 
+/**
+ * Wraps text in `<name>...</name>` so the model can tell instructions from the untrusted message.
+ * A closing tag for `name` inside `body` is defanged so the message cannot end its block early.
+ * Not HTML-escaped: the message is Markdown and code, and the model would echo entities back.
+ */
+export function tag(name: string, body: string): string {
+  const safe = body.replace(new RegExp(`</(${name})`, "gi"), "<\\/$1");
+  return `<${name}>\n${safe}\n</${name}>`;
+}
+
 // Shared tone rules. Ported from the "signs of AI writing" checklist
 // (github.com/blader/humanizer) - the point is output nobody clocks as a bot.
-const TONE = `Rules:
-- Keep the meaning exactly the same. Do not add facts, opinions, greetings or sign-offs that were not in the original.
+const TONE = tag(
+  "rules",
+  `- Keep the meaning exactly the same. Do not add facts, opinions, greetings or sign-offs that were not in the original.
 - Plain, direct English. Say the thing instead of staging it. Shorten and restructure freely.
 - Never write "not just X, but Y", "it's not X, it's Y", or any variant. State the point once.
 - No closing flourish. End on the last real fact, not a summary line or a punchy fragment.
@@ -48,39 +59,41 @@ const TONE = `Rules:
 - Use is/are/has directly. Not "serves as", "acts as", "plays a key role in".
 - Active voice with the real actor named, whenever the original names one.
 - Bold is for labels that earn it, not decoration. No emoji unless the original had them.
-- Contractions are fine. It should read like a competent colleague typed it quickly, not like a press release.
-- Output ONLY the rewritten message. No preamble, no explanation, no code fence around the whole reply.`;
+- Contractions are fine. It should read like a competent colleague typed it quickly, not like a press release.`,
+);
+
+const OUTPUT = tag(
+  "output_format",
+  "Output ONLY the rewritten message. No preamble, no explanation, no code fence around the whole reply.",
+);
+
+const prompt = (role: string, formatting: string) =>
+  [tag("role", role), TONE, tag("formatting", formatting), OUTPUT].join("\n\n");
 
 export const DEFAULT_PROMPTS: Record<Target, string> = {
-  slack: `Rewrite the user's message as a Slack message, formatted in Markdown.
-
-${TONE}
-
-Slack formatting constraints:
-- Slack has NO tables and NO headings. Never output a Markdown table or a # heading.
+  slack: prompt(
+    "Rewrite the message in <message> as a Slack message, formatted in Markdown.",
+    `- Slack has NO tables and NO headings. Never output a Markdown table or a # heading.
 - For tabular data, use a fenced code block with columns padded by spaces so they line up.
 - Use **bold** for emphasis and labels, - for bullets, 1. for numbered steps.
 - Use \`inline code\` for identifiers/paths and fenced code blocks for code.
 - Keep paragraphs short. A blank line between blocks.`,
+  ),
 
-  teams: `Rewrite the user's message as a Microsoft Teams message, formatted in Markdown.
-
-${TONE}
-
-Teams formatting constraints:
-- Teams supports real tables: use a Markdown table when the content is genuinely tabular.
+  teams: prompt(
+    "Rewrite the message in <message> as a Microsoft Teams message, formatted in Markdown.",
+    `- Teams supports real tables: use a Markdown table when the content is genuinely tabular.
 - Teams has no headings in chat. Use a short **bold** line instead of a # heading.
 - Use - for bullets, 1. for numbered steps, **bold** for emphasis and labels.
 - Use \`inline code\` for identifiers/paths and fenced code blocks for code.
 - Keep paragraphs short. A blank line between blocks.`,
+  ),
 
-  generic: `Rewrite the user's message in clean, standard Markdown.
-
-${TONE}
-
-Formatting:
-- Use headings, tables, bullets, numbered lists and fenced code blocks wherever they make the message easier to read.
+  generic: prompt(
+    "Rewrite the message in <message> in clean, standard Markdown.",
+    `- Use headings, tables, bullets, numbered lists and fenced code blocks wherever they make the message easier to read.
 - Keep paragraphs short.`,
+  ),
 };
 
 const DEFAULT_CONFIG: MorphConfig = {

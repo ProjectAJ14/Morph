@@ -79,7 +79,9 @@ for (const role of PAPER) {
 
 const componentFiles = [
   "src/globals.css",
-  ...readdirSync(path.join(root, "src/components")).map((f) => `src/components/${f}`),
+  ...readdirSync(path.join(root, "src/components"), { withFileTypes: true })
+    .filter((d) => d.isFile())
+    .map((d) => `src/components/${d.name}`),
   "src/App.tsx",
 ];
 

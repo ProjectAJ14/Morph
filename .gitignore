@@ -17,3 +17,4 @@ Thumbs.db
 # Env
 .env
 .env.local
+scripts/ai-eval/results/
