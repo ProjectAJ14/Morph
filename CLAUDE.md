@@ -15,6 +15,9 @@ npm run electron:build # Production build
   - `providers.ts` — Anthropic, Groq and Azure OpenAI adapters; the active one is chosen in settings.
     Azure routes on a deployment name (typed in, no catalog) plus a resource endpoint, and takes an
     optional api-version override for resources that reject the built-in default
+  - Prompts are XML-tagged (`role`/`rules`/`formatting`/`output_format`, built with `tag()` in
+    `config.ts`). `complete()` wraps the clipboard text in `<message>` and appends a `<security>`
+    section (data, not instructions) via `buildRequest`, so user-edited prompts get it too
   - `clipboard-format.ts` — writes both clipboard flavors (`text/html` + `text/plain`)
   - `mrkdwn.ts` — Markdown → Slack mrkdwn, with an assert self-check (`npm run check`)
   - `report.ts` — a failed run → a prefilled GitHub issue. The cause chain is captured in
@@ -65,6 +68,8 @@ block). Teams supports tables but not headings.
 ## Key Commands
 - `npm run dev` — Vite dev server only
 - `npm run check` — Design-token self-check + compile electron/ + mrkdwn/clipboard self-checks
+- `npm run ai:eval` — Replay `scripts/ai-eval/cases.json` through the live provider (needs a key;
+  `--runs N`, `--compare base.json`). Run it before and after any prompt change; see `.claude/skills/ai-eval`
 - `npm run electron:dev` — Full dev (Vite + Electron)
 - `npm run electron:compile` — Compile electron/ TypeScript
 - `npm run electron:build` — Full production build
