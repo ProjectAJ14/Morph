@@ -4,12 +4,13 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 
-function harness({ packaged = true, mas = false, platform = 'darwin' } = {}) {
+function harness({ packaged = true, mas = false, platform = 'darwin', focused = null } = {}) {
   const events = {};
   const messages = [];
   let checks = 0;
   let installs = 0;
-  let response = 1;
+  const ready = [];
+  const quitting = [];
   const updater = {
     on: (event, callback) => { events[event] = callback; },
     checkForUpdates: async () => { checks++; return { downloadPromise: null }; },
@@ -20,36 +21,81 @@ function harness({ packaged = true, mas = false, platform = 'darwin' } = {}) {
     exports,
     require: (name) => name === 'electron' ? {
       app: { isPackaged: packaged, once() {} },
-      dialog: { showMessageBox: async (message) => { messages.push(message); return { response }; } },
+      BrowserWindow: { getFocusedWindow: () => focused },
+      // (options) or (parent, options): record the options, and the parent when given
+      dialog: { showMessageBox: async (...args) => {
+        const message = args.length === 2 ? { ...args[1], parent: args[0] } : args[0];
+        messages.push(message);
+        return { response: 0 };
+      } },
     } : { autoUpdater: updater },
     process: { platform, mas },
     console: { warn() {} },
     setInterval: () => ({ unref() {} }),
     clearInterval() {},
   });
-  return { exports, events, messages, updater, checks: () => checks, installs: () => installs,
-    choose: (value) => { response = value; } };
+  const start = () => exports.startUpdates({
+    onReady: (v) => ready.push(v),
+    onBeforeRestart: () => quitting.push(true),
+    onRestartAborted: () => quitting.push(false),
+  });
+  return { exports, events, messages, updater, ready, quitting, start, checks: () => checks, installs: () => installs };
 }
 
 (async () => {
   for (const options of [{ packaged: false }, { mas: true }, { platform: 'linux' }]) {
     const h = harness(options);
-    h.exports.startUpdates();
+    h.start();
     await h.exports.checkForUpdates();
     assert.equal(h.checks(), 0);
   }
   let h = harness();
   await h.exports.checkForUpdates(true);
   assert.equal(h.messages[0].message, 'Morph is up to date.');
-  h.exports.startUpdates();
+  h.start();
   assert.equal(h.updater.autoDownload, true);
-  assert.equal(h.updater.autoInstallOnAppQuit, false);
-  h.events['update-downloaded']();
-  await Promise.resolve();
-  assert.equal(h.installs(), 0, 'Later must not restart the app');
-  h.choose(0);
+  assert.equal(h.updater.autoInstallOnAppQuit, true, 'Quit installs a downloaded update');
+  h.exports.installUpdate();
+  assert.equal(h.installs(), 0, 'Nothing to install before a download');
+  h.events['update-downloaded']({ version: '9.9.9' });
+  assert.deepEqual(h.ready, ['9.9.9'], 'A download lights the rail tile');
+  assert.equal(h.exports.getReadyVersion(), '9.9.9');
+  h.messages.length = 0;
   await h.exports.checkForUpdates(true);
-  assert.equal(h.installs(), 1, 'An explicit restart installs the downloaded update');
+  assert.equal(h.installs(), 0, 'The menu never installs; it points at the tile');
+  assert.match(h.messages[0].message, /9\.9\.9 is ready/);
+  h.exports.installUpdate();
+  h.exports.installUpdate();
+  assert.equal(h.installs(), 1, 'The tile installs once');
+  assert.deepEqual(h.quitting, [true], 'Main lets windows close before quitAndInstall');
+  h.events.error(new Error('install failed'));
+  assert.deepEqual(h.quitting, [true, false], 'A failed install keeps the app alive');
+  assert.deepEqual(h.ready, ['9.9.9', null], 'A failed install clears the tile');
+  assert.equal(h.exports.getReadyVersion(), null);
+  assert.equal(h.messages.at(-1).type, 'warning', 'A failed install says so');
+
+  // A background error with an update waiting stays quiet and keeps the tile.
+  h = harness();
+  h.start();
+  h.events['update-downloaded']({ version: '9.9.9' });
+  h.events.error(new Error('feed hiccup'));
+  assert.deepEqual(h.ready, ['9.9.9']);
+  assert.equal(h.messages.length, 0);
+  assert.equal(h.exports.getReadyVersion(), '9.9.9');
+
+  // quitAndInstall throwing outright takes the same abort path.
+  h.updater.quitAndInstall = () => { throw new Error('not signed'); };
+  h.exports.installUpdate();
+  assert.deepEqual(h.quitting, [true, false], 'A throwing install keeps the app alive');
+  assert.deepEqual(h.ready, ['9.9.9', null]);
+  h.events['update-downloaded']({ version: '9.9.10' });
+  assert.equal(h.exports.getReadyVersion(), '9.9.10', 'The next download lights the tile again');
+
+  // Dialogs open over the window the user is looking at.
+  const win = { id: 'focused' };
+  h = harness({ focused: win });
+  await h.exports.checkForUpdates(true);
+  assert.equal(h.messages[0].parent, win);
 
   h = harness();
   h.updater.checkForUpdates = async () => { throw new Error('offline'); };

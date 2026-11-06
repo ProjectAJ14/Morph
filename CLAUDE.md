@@ -23,6 +23,13 @@ npm run electron:build # Production build
   - `report.ts` — a failed run → a prefilled GitHub issue. The cause chain is captured in
     `format:run`'s catch because IPC flattens an Error to its message; everything bound for
     the issue URL is redacted first (keys, Azure resource host, home paths)
+  - `updates.ts` — electron-updater, packaged macOS/Windows only: checks at launch and every 6h,
+    downloads silently, never pops a dialog on its own. A finished download pushes `updates:ready`
+    and the rail shows a download tile (`updates:ready-version` on mount covers a push that came
+    first); clicking it calls `updates:install` (own-window sender only), and a normal Quit also
+    installs. A failed install clears the tile and resets `isQuitting`. Only the "Check for
+    Updates…" menu shows dialogs, and it points at the tile rather than installing.
+    Self-check: `scripts/check-updates.cjs`
 - **src/** — Renderer (React): UI components, Zustand store
   - `styles/tokens.css` — **the design system**; see below
   - `globals.css` — base + component classes, built entirely on those tokens
