@@ -41,6 +41,11 @@ export interface MorphBridge {
   hideWindow: () => Promise<void>;
   reportIssue: () => Promise<void>;
   setWindowBackground: (color: string) => Promise<void>;
+  updates: {
+    readyVersion: () => Promise<string | null>;
+    install: () => Promise<void>;
+    onReady: (cb: (version: string | null) => void) => () => void;
+  };
   writeClipboardFormatted: (markdown: string, target: Target) => Promise<void>;
   getHistory: (limit?: number, offset?: number) => Promise<RewriteRecord[]>;
   deleteHistoryItem: (id: number) => Promise<void>;

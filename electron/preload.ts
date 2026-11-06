@@ -12,6 +12,17 @@ contextBridge.exposeInMainWorld("morph", {
   setWindowBackground: (color: string): Promise<void> =>
     ipcRenderer.invoke("window:set-background", color),
 
+  // Updates: the rail tile lights once a download is ready and installs on click
+  updates: {
+    readyVersion: (): Promise<string | null> => ipcRenderer.invoke("updates:ready-version"),
+    install: (): Promise<void> => ipcRenderer.invoke("updates:install"),
+    onReady: (cb: (version: string | null) => void) => {
+      const listener = (_e: unknown, version: string | null) => cb(version);
+      ipcRenderer.on("updates:ready", listener);
+      return () => { ipcRenderer.removeListener("updates:ready", listener); };
+    },
+  },
+
   // Clipboard
   writeClipboardFormatted: (markdown: string, target: string): Promise<void> =>
     ipcRenderer.invoke("clipboard:write-formatted", markdown, target),

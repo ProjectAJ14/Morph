@@ -15,7 +15,7 @@ import { getDb, insertRewrite, getHistory, deleteRewrite, clearHistory, closeDb 
 import { complete, PROVIDER_MODELS, PROVIDER_LABELS } from "./providers";
 import { writeFormatted } from "./clipboard-format";
 import { errorChain, issueUrl, Failure } from "./report";
-import { startUpdates, checkForUpdates } from "./updates";
+import { startUpdates, checkForUpdates, getReadyVersion, installUpdate } from "./updates";
 
 process.on("uncaughtException", (err) => console.error("[Morph] Uncaught exception:", err));
 process.on("unhandledRejection", (reason) => console.error("[Morph] Unhandled rejection:", reason));
@@ -249,6 +249,10 @@ function setupIpcHandlers(): void {
 
   // Hide the window once the renderer has shown its confirmation
   ipcMain.handle("window:hide", () => mainWindow?.hide());
+  // Rail "update ready" tile: ask on mount (the push may predate it), install on click.
+  ipcMain.handle("updates:ready-version", () => getReadyVersion());
+  // Installing quits the app, so only our own window may ask for it.
+  ipcMain.handle("updates:install", (e) => { if (e.sender === mainWindow?.webContents) installUpdate(); });
   // Keeps the native frame (corners, resize repaint) on the active ground.
   ipcMain.handle("window:set-background", (_e, color: string) => {
     if (/^#[0-9a-fA-F]{3,8}$/.test(color)) mainWindow?.setBackgroundColor(color);
@@ -336,7 +340,11 @@ async function startApp(): Promise<void> {
 
   // Create window
   await createWindow();
-  startUpdates();
+  startUpdates({
+    onReady: (version) => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("updates:ready", version); },
+    onBeforeRestart: () => { isQuitting = true; },
+    onRestartAborted: () => { isQuitting = false; },
+  });
 
   // Register global shortcut
   const config = readConfig();

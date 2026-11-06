@@ -147,6 +147,16 @@ textarea { resize: none; }
               color      var(--duration-fast) var(--ease),
               border-color var(--duration-fast) var(--ease);
 }
+/* an update has downloaded: --spot marks it ready, the dot pulses until clicked */
+.rail__update { position: relative; color: var(--spot); }
+.icon-btn.rail__update:hover { color: var(--spot); }
+.rail__update-dot {
+  position: absolute; top: 6px; right: 6px;
+  width: 5px; height: 5px;
+  background: var(--spot);
+  animation: fmt-breathe 1.4s ease-in-out infinite;
+}
+
 .icon-btn:hover { background: var(--panel); color: var(--ink); border-color: var(--line-2); }
 
 /* ------------------------------------------------------------

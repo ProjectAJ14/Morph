@@ -194,8 +194,9 @@ Built with Electron, React, and Claude.
 ## Automatic updates and macOS signing
 
 Installed direct-download builds check GitHub Releases at launch and every six hours,
-download updates in the background, and offer **Restart and Install** or **Later**.
-Use **Morph → Check for Updates…** to retry or install a downloaded update.
+download updates in the background, and show a download icon in the sidebar once one is
+ready (no pop-up). Click it to restart and install now, or just quit and it installs then.
+**Morph → Check for Updates…** checks on demand; it points at the icon rather than installing.
 Development builds do not check for updates. Mac App Store builds use store updates.
 
 Follow the [step-by-step release setup guide](docs/release-setup.md).
